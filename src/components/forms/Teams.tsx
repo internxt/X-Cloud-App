@@ -11,23 +11,8 @@ import { getTeamByUserOwner } from './../../services/TeamService';
 import { getTeamMembersByIdTeam, saveTeamsMembers } from './../../services/TeamMemberService';
 import InxtContainer from './../InxtContainer';
 import TeamsPlans from './../TeamPlans';
-import styled, { keyframes } from 'styled-components';
-import { bounceInRight } from 'react-animations';
-import { bounceInLeft } from 'react-animations';
-import { bounceInDown } from 'react-animations';
 import { getHeaders } from '../../lib/auth';
 
-const BounceRight = styled.div`
-  animation: 2s ${keyframes`${bounceInRight}`};
-`;
-
-const BounceLeft = styled.div`
-  animation: 2s ${keyframes`${bounceInLeft}`};
-`;
-
-const BounceDown = styled.div`
-  animation: 2s ${keyframes`${bounceInDown}`};
-`;
 
 interface Props {
     match?: any
@@ -117,7 +102,6 @@ class Teams extends React.Component<Props, State> {
     renderProductDescription = (): JSX.Element => {
         if (this.state.showDescription) {
             return(
-                <BounceRight>
                     <InxtContainer>
                         <p className="title1">Plans Description</p>
 
@@ -160,7 +144,6 @@ class Teams extends React.Component<Props, State> {
                             </div>
                         </div>
                     </InxtContainer>
-                </BounceRight>
             );
         } else {
             return <div></div>
@@ -170,15 +153,11 @@ class Teams extends React.Component<Props, State> {
     renderPlans = (): JSX.Element => {
         return (
             <div className="settings">
-                <BounceDown>
                     <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />
-                </BounceDown>
 
-                <BounceLeft>
                     <InxtContainer>
                         <TeamsPlans handleShowDescription={this.handleShowDescription}/>
                     </InxtContainer>
-                </BounceLeft>
 
                 {this.renderProductDescription()}
             </div>
@@ -187,11 +166,8 @@ class Teams extends React.Component<Props, State> {
 
     renderTeamSettings = (): JSX.Element => {
         return <div>
-            <BounceDown>
                 <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />        
-            </BounceDown>
 
-            <BounceLeft>
                 <Container className="login-main">
                     <Container className="login-container-box edit-password-box" style={{ minHeight: '430px', height: 'auto' }}>
                         <div className="container-register">
@@ -275,7 +251,6 @@ class Teams extends React.Component<Props, State> {
                         </div>
                     </Container>
                 </Container>
-            </BounceLeft>
         </div>;
     }
 
