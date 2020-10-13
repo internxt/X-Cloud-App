@@ -250,6 +250,7 @@ class Teams extends React.Component<Props, State> {
                                             this.sendEmailTeamsMember(mails)
                                         } else {
                                             toast.warn(`Please, enter a valid email before sending out the invite`);
+                                            
                                         }
                                     }}>Invite</Button>
 
