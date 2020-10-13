@@ -12,6 +12,9 @@ import { getTeamMembersByIdTeam, saveTeamsMembers } from './../../services/TeamM
 import InxtContainer from './../InxtContainer';
 import TeamsPlans from './../TeamPlans';
 import { getHeaders } from '../../lib/auth';
+//saveTeamsMembersimport { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 
 interface Props {
@@ -24,7 +27,7 @@ interface State {
         email: string
     }
     teamName: string
-    emails: Array<string>
+    email: string
     menuTitle: string
     visibility: string
     idTeam: number
@@ -41,12 +44,12 @@ class Teams extends React.Component<Props, State> {
                 email: ''
             },
             teamName: '',
-            emails: [],
+            email: '',
             menuTitle: 'Create',
             visibility: '',
             idTeam: 0,
             showDescription: false,
-            template: () => {}
+            template: () => { }
         }
     }
 
@@ -78,17 +81,22 @@ class Teams extends React.Component<Props, State> {
                 idTeam: team.id,
                 teamName: team.name
             });
-
+            
+            //Cogemos id de cada team, y entonces a los miembros de cualquier tipo
             getTeamMembersByIdTeam(team.id).then((members: any) => {
-                let remoteMembers: Array<string> = [];
+                //decimos que es un string en los remoteMembers
+                let remoteMembers: string = ''
+                //por cada miembro de tipo usuario string le meteremos los miembros
 
-                members.forEach((member: {user: string}) => {
-                    remoteMembers.push(member.user);
+                members.forEach((member: { user: string }) => {
+                    remoteMembers.concat(member.user);
+                    
                 });
 
                 this.setState({
-                    emails: remoteMembers
+                    email: remoteMembers
                 });
+
             }).catch(err => {
                 console.log(err);
             });
@@ -99,51 +107,78 @@ class Teams extends React.Component<Props, State> {
         });
     }
 
+    sendEmailTeamsMember = (mail) => {
+        fetch('/api/team-invitations', {
+            method: 'POST',
+            headers: getHeaders(true, false),
+            body: JSON.stringify({ email: mail })
+        }).then(async res => {
+            return { response: res, data: await res.json() };
+        }).then(res => {
+            if (res.response.status !== 200) {
+                throw res.data;
+            } else {
+                toast.warn(`Invitation email sent to ${mail}`);
+            }
+        }).catch(err => {
+            toast.warn(`Error: ${err.error ? err.error : 'Internal Server Error'}`);
+        });
+    }
+
+    
+    handleEmailChange = (event) => { 
+        this.setState({
+            email: event.target.value
+        });
+    }
+
+  
+
     renderProductDescription = (): JSX.Element => {
         if (this.state.showDescription) {
-            return(
-                    <InxtContainer>
-                        <p className="title1">Plans Description</p>
+            return (
+                <InxtContainer>
+                    <p className="title1">Plans Description</p>
 
-                        <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-                            <div style={{textAlign: 'center', display: 'flex', justifyContent: 'space-between'}}>
-                                <div style={{paddingRight: 12}}>
-                                    <p className="title1">20GB</p>
-                                    <p>Secure file sharing</p>
-                                    <p>Access anywhere</p>
-                                    <p>End-to-end encryption</p>
-                                    <p>Collaboration</p>
-                                    <p>Administration tools</p>
-                                </div>
-
-                                <div style={{ border: 'solid 1px #eaeced'}}></div>
+                    <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <div style={{ textAlign: 'center', display: 'flex', justifyContent: 'space-between' }}>
+                            <div style={{ paddingRight: 12 }}>
+                                <p className="title1">20GB</p>
+                                <p>Secure file sharing</p>
+                                <p>Access anywhere</p>
+                                <p>End-to-end encryption</p>
+                                <p>Collaboration</p>
+                                <p>Administration tools</p>
                             </div>
 
-                            <div style={{textAlign: 'center', display: 'flex', justifyContent: 'space-between'}}>
-                                <div style={{paddingRight: 12}}>
-                                    <p className="title1">200GB</p>
-                                    <p>Secure file sharing</p>
-                                    <p>Access anywhere</p>
-                                    <p>End-to-end encryption</p>
-                                    <p>Collaboration</p>
-                                    <p>Administration tools</p>
-                                </div>
+                            <div style={{ border: 'solid 1px #eaeced' }}></div>
+                        </div>
 
-                                <div style={{ border: 'solid 1px #eaeced'}}></div>
+                        <div style={{ textAlign: 'center', display: 'flex', justifyContent: 'space-between' }}>
+                            <div style={{ paddingRight: 12 }}>
+                                <p className="title1">200GB</p>
+                                <p>Secure file sharing</p>
+                                <p>Access anywhere</p>
+                                <p>End-to-end encryption</p>
+                                <p>Collaboration</p>
+                                <p>Administration tools</p>
                             </div>
 
-                            <div style={{textAlign: 'center', display: 'flex', justifyContent: 'space-between'}}>
-                                <div style={{}}>
-                                    <p className="title1">2TB</p>
-                                    <p>Secure file sharing</p>
-                                    <p>Access anywhere</p>
-                                    <p>End-to-end encryption</p>
-                                    <p>Collaboration</p>
-                                    <p>Administration tools</p>
-                                </div>
+                            <div style={{ border: 'solid 1px #eaeced' }}></div>
+                        </div>
+
+                        <div style={{ textAlign: 'center', display: 'flex', justifyContent: 'space-between' }}>
+                            <div style={{}}>
+                                <p className="title1">2TB</p>
+                                <p>Secure file sharing</p>
+                                <p>Access anywhere</p>
+                                <p>End-to-end encryption</p>
+                                <p>Collaboration</p>
+                                <p>Administration tools</p>
                             </div>
                         </div>
-                    </InxtContainer>
+                    </div>
+                </InxtContainer>
             );
         } else {
             return <div></div>
@@ -153,109 +188,82 @@ class Teams extends React.Component<Props, State> {
     renderPlans = (): JSX.Element => {
         return (
             <div className="settings">
-                    <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />
+                <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />
 
-                    <InxtContainer>
-                        <TeamsPlans handleShowDescription={this.handleShowDescription}/>
-                    </InxtContainer>
+                <InxtContainer>
+                    <TeamsPlans handleShowDescription={this.handleShowDescription} />
+                </InxtContainer>
 
                 {this.renderProductDescription()}
             </div>
         );
     }
 
+
+    formRegisterSubmit(e: any) {
+        e.preventDefault();
+
+        if (this.state.email.length > 0) {
+            saveTeamsMembers(this.state.idTeam, this.state.email).then((teamsMembers) => {
+                console.log(teamsMembers);
+            }).catch((err: any) => { });
+        }
+    }
+
+
     renderTeamSettings = (): JSX.Element => {
         return <div>
-                <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />        
+            <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />
 
-                <Container className="login-main">
-                    <Container className="login-container-box edit-password-box" style={{ minHeight: '430px', height: 'auto' }}>
-                        <div className="container-register">
-                            <p className="container-title edit-password" style={{marginLeft: 0}}>
-                                {this.state.menuTitle} your team
+            <Container className="login-main">
+                <Container className="login-container-box edit-password-box" style={{ minHeight: '430px', height: 'auto' }}>
+                    <div className="container-register">
+                        <p className="container-title edit-password" style={{ marginLeft: 0 }}>
+                            {this.state.menuTitle} your team
                             </p>
 
-                            <Form className="form-register" onSubmit={(e: any) => {
-                                e.preventDefault();
+                        <Form className="form-register" onSubmit={(this.formRegisterSubmit.bind(this))}>
 
-                                if (this.state.emails.length > 0) {
-                                    saveTeamsMembers(this.state.idTeam, this.state.emails).then((teamsMembers) => {
-                                        console.log(teamsMembers);
-                                    }).catch((err: any) => {});
-                                }
-                            }} >
-                                <Form.Row>
-                                    <Form.Group as={Col} controlId="teamName">
-                                        <Form.Control placeholder="Team's name" name="team-name" value={this.state.teamName} onChange={this.handleChangeName} readOnly={true} />
-                                    </Form.Group>
-                                </Form.Row>
+                            <Form.Row>
+                                <Form.Group as={Col} controlId="teamName">
+                                    <Form.Control placeholder="Team's name" name="team-name" value={this.state.teamName} onChange={this.handleChangeName} readOnly={true} />
+                                </Form.Group>
+                            </Form.Row>
 
-                                <Form.Row>
-                                    <Form.Group as={Col} controlId="invitedMember">
-                                        <ReactMultiEmail
-                                            placeholder="Invite members (Example: member@internxt.com)"
-                                            emails={this.state.emails}
-                                            onChange={(_emails: Array<string>) => {
-                                                this.setState({ emails: _emails });
-                                            }}
-                                            validateEmail={email => {
-                                                return isEmail(email);
-                                            }}
-                                            getLabel={(
-                                                email: string,
-                                                index: number,
-                                                removeEmail: (index: number) => void,
-                                            ) => {
-                                                return (
-                                                    <div data-tag key={index}>
-                                                        {email}
-                                                        <span data-tag-handle onClick={() => {
-                                                            removeEmail(index)
+                            <Form.Row>
+                                <Form.Group as={Col} controlId="invitedMember">
+                                    <div>
+                                        <input className="mail-box" type="email" placeholder="example@example.com" value={this.state.email} onChange={this.handleEmailChange} />
+                                    </div>
+                                
+                                  
+                                </Form.Group>
+                            </Form.Row>
 
-                                                            fetch('/api/teams-members', {
-                                                                method: 'DELETE',
-                                                                headers: getHeaders(true, false),
-                                                                body: JSON.stringify({
-                                                                    members: [email],
-                                                                    idTeam: this.state.idTeam
-                                                                })
-                                                            }).then(async res => {
-                                                                // return { res, data: await res.json() }
-                                                            }).then(res => {
-                                                                // if (res.res.status !== 200) {
-                                                                //     throw res.data;
-                                                                // } else {
-                                                                // }
-                                                            }).catch(err => {
-                                                                // if (err.error) {
-                                                                // } else {
-                                                                //     toast.warn('Internal server error. Try again later');
-                                                                // }
-                                                            });
-                                                        }}>
-                                                            <i className="far fa-trash-alt"></i>
-                                                        </span>
-                                                    </div>
-                                                );
-                                            }}
-                                        />
-                                    </Form.Group>
-                                </Form.Row>
+                            <Form.Row className="form-register-submit">
+                                <Form.Group as={Col}>
+                                   
+                                    <Button className="send-button" type="button" onClick={() => {
+                                        const mails = this.state.email;
+                                        if (mails !== undefined) {
+                                            console.log(mails)
+                                            this.sendEmailTeamsMember(mails)
+                                        } else {
+                                            toast.warn(`Please, enter a valid email before sending out the invite`);
+                                        }
+                                    }}>Invite</Button>
 
-                                <Form.Row className="form-register-submit">
-                                    <Form.Group as={Col}>
-                                        <Button className="on btn-block" type="submit">Save</Button>
-                                    </Form.Group>
-                                </Form.Row>
-                            </Form>
-                        </div>
-                    </Container>
+                                </Form.Group>
+                            </Form.Row>
+                        </Form>
+                    </div>
                 </Container>
+            </Container>
         </div>;
     }
 
     render() {
-        return(
+        return (
             <div>
                 {this.state.template()}
             </div>
