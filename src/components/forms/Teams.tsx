@@ -77,7 +77,9 @@ class Teams extends React.Component<Props, State> {
 
 
     handlePassword = (password: any) => {
-        console.log(password)
+        return new Promise((resolve, reject) => {
+            
+        });
     }
 
 
@@ -117,44 +119,23 @@ class Teams extends React.Component<Props, State> {
         });
     }
 
-    isBridgeUserActivated = async (userEmail) => {
-        return new Promise( (resolve, reject) => {
-            fetch(`/api/teams/${userEmail}`, {
+    isBridgeUserActivated = async (bridgeUserEmail) => {
+        return await new Promise( (resolve, reject) => {                       
+            console.log("BRIDGE USER", bridgeUserEmail); //debug                       
+    
+            fetch(`/api/user/isactivated/${bridgeUserEmail}`, {
                 method: 'get',
                 headers: getHeaders(true, false)
-            }).then((team) => {
-                console.log("TEAM", team) //debug
-                if(team) {
-                    team.json().then((teamData) => {
+            }).then((responseTeam) => {                           
+                responseTeam.json().then((teamProps) => {
+                    console.log("TEAM PROPS", teamProps); //debug 
+                    resolve(teamProps);
+                }).catch((error) => {
+                    console.log('No team props', error);
+                })
+            }).catch((err) => { reject(err) })                                                   
 
-                        const bridgeUser = teamData.bridge_user;
-                        console.log("BRIDGE USER", bridgeUser); //debug 
-                        let teamUser = this.state.team;
-                        teamUser.bridgeUser = bridgeUser;
-                        this.setState({ team: teamUser });
-    
-                        fetch(`/api/user/isactivated/${bridgeUser}`, {
-                            method: 'get',
-                            headers: getHeaders(true, false)
-                        }).then((responseTeam) => {
-                            
-                            responseTeam.json().then((teamProps) => {
-                                console.log("TEAM PROPS", teamProps); //debug 
-                                resolve(teamProps);
-                            }).catch((error) => {
-                                console.log('No team props', error);
-                            })
-                        }).catch((err) => { reject(err) })
-                    }).catch((err) => { console.log("No responseTeam", err) })
-                } else {
-                    reject("CANNOT READ TEAM ACTIVATION")
-                }
-                
-            }).catch((err) => { 
-                reject(err);
-            })
-
-        })
+        });
     }
 
     componentDidMount() {
@@ -162,34 +143,7 @@ class Teams extends React.Component<Props, State> {
             history.push('/login');
         }
 
-        const user = JSON.parse(localStorage.xUser);
-
-        this.getTeamByMember(user.email).then((team: any) => {
-            this.setState({ team: { ...this.state.team, bridgeUser: team.bridge_user }});
-
-            this.isBridgeUserActivated(team.bridge_user).then((resTeam: any) => {
-                this.setState({ isTeamActivated: resTeam.activatedTeam }) 
-                this.setState({ idTeam: resTeam.teamId })
-                console.log("TEAM STATE ", this.state); //debug ok
-
-                this.setState({
-                    template: this.renderPassword.bind(this)
-                });
-
-                // Muestra pantalla de contraseña de equipo
-            }).catch((err) => {
-                console.log("ERROR ACTIVATING BRIDGE USER ", err);
-                this.setState({
-                    template: this.renderActivation.bind(this)
-                });
-            })
-        }).catch((err) => {
-            // No tiene equipo
-            console.log("USER MEMBER NOT FOUND")
-            this.setState({
-                template: this.renderPlans.bind(this)
-            });
-        })       
+        const user = JSON.parse(localStorage.xUser);      
     }
 
     renderProductDescription = (): JSX.Element => {
@@ -259,21 +213,36 @@ class Teams extends React.Component<Props, State> {
 
     renderTeamWorkspace = (): JSX.Element => {
         return (
-            <div className="workspace">
-                <label> WORKSPACE DE MIEMBRO DE EQUIPO </label>
+            <div className="member-workspace">
+                <InxtContainer>
+                    <XCloud 
+                        isAuthenticated={true}
+                        user={this.state.team.bridgeUser}
+                        isActivated={this.state.isTeamActivated}
+                        handleKeySaved={this.handleKeySaved} 
+                    />
+                </InxtContainer>
+
             </div>
         );
     }
 
     renderTeamAdminWorkspace = (): JSX.Element => {
-        return <div>
-            <Route exact path='/app' render={(props) => <XCloud {...props}
-            isAuthenticated={true}
-            user={this.state.team.bridgeUser}
-            isActivated={this.state.isTeamActivated}
-            handleKeySaved={this.handleKeySaved} />
-          } />
-        </div>; 
+
+        return (
+            <div className="admin-workspace">
+
+                <InxtContainer>
+                    <XCloud 
+                        isAuthenticated={true}
+                        user={this.state.team.bridgeUser}
+                        isActivated={this.state.isTeamActivated}
+                        handleKeySaved={this.handleKeySaved} 
+                    />
+                </InxtContainer>
+
+            </div>
+        ); 
     }
 
     handleKeySaved = (user: JSON) => {
@@ -355,7 +324,7 @@ class Teams extends React.Component<Props, State> {
             <div className="password">
                 <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />
 
-                <Container className="login-container-box edit-password-box">
+                <Container className="login-container-box edit-password-box" style={{height:'350px'}}>
                     <div className="container-register">
                         <p className="container-title edit-password">Enter your team password</p>
                         <Form className="form-register" onSubmit={this.handlePassword} >
