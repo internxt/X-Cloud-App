@@ -11,9 +11,9 @@ import { getTeamMembersByIdTeam, saveTeamsMembers } from './../../services/TeamM
 import InxtContainer from './../InxtContainer';
 import TeamsPlans from './../TeamPlans';
 import { getHeaders } from '../../lib/auth';
-import { Route } from 'react-router-dom';
-import XCloud from '../xcloud/XCloud';
-import { async } from 'async';
+//saveTeamsMembersimport { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 import logo from '../../assets/drive-logo.svg';
 
 
@@ -24,19 +24,19 @@ interface Props {
 
 interface State {
     user: {
-        isAdmin: boolean,
-        isTeamMember: boolean
+        email: string,
+        isAdmin: Boolean,
+        isTeamMember: Boolean
     }
     team: {
         bridgeUser: string,
         teamPassword: string
     }
-    idTeam: number
     teamName: string
-    isTeamActivated: boolean
-    emails: Array<string>
+    email: string
     menuTitle: string
     visibility: string
+    idTeam: number
     showDescription: boolean
     template: any
 }
@@ -47,6 +47,7 @@ class Teams extends React.Component<Props, State> {
         super(props);
         this.state = {
             user: {
+                email: '',
                 isAdmin: false,
                 isTeamMember: false
             },
@@ -54,17 +55,14 @@ class Teams extends React.Component<Props, State> {
                 bridgeUser: '',
                 teamPassword: ''
             },
-            idTeam: 0,
             teamName: '',
-            isTeamActivated: false,
-            emails: [],
+            email: '',
             menuTitle: 'Create',
             visibility: '',
+            idTeam: 0,
             showDescription: false,
             template: () => { }
         }
-
-        this.handleChangePass = this.handleChangePass.bind(this);
     }
 
     handleShowDescription = (_showDescription) => {
@@ -77,11 +75,8 @@ class Teams extends React.Component<Props, State> {
 
 
     handlePassword = (password: any) => {
-        return new Promise((resolve, reject) => {
-            
-        });
+        console.log(password)
     }
-
 
     isLoggedIn = () => {
         return !(!localStorage.xToken);
@@ -141,10 +136,35 @@ class Teams extends React.Component<Props, State> {
     componentDidMount() {
         if (!this.isLoggedIn()) {
             history.push('/login');
-        }
-
-        const user = JSON.parse(localStorage.xUser);      
+        }     
     }
+
+    sendEmailTeamsMember = (mail) => {
+        fetch('/api/team-invitations', {
+            method: 'POST',
+            headers: getHeaders(true, false),
+            body: JSON.stringify({ email: mail })
+        }).then(async res => {
+            return { response: res, data: await res.json() };
+        }).then(res => {
+            if (res.response.status !== 200) {
+                throw res.data;
+            } else {
+                toast.warn(`Invitation email sent to ${mail}`);
+            }
+        }).catch(err => {
+            toast.warn(`Error: ${err.error ? err.error : 'Internal Server Error'}`);
+        });
+    }
+
+    
+    handleEmailChange = (event) => { 
+        this.setState({
+            email: event.target.value
+        });
+    }
+
+  
 
     renderProductDescription = (): JSX.Element => {
         if (this.state.showDescription) {
@@ -214,14 +234,7 @@ class Teams extends React.Component<Props, State> {
     renderTeamWorkspace = (): JSX.Element => {
         return (
             <div className="member-workspace">
-                <InxtContainer>
-                    <XCloud 
-                        isAuthenticated={true}
-                        user={this.state.team.bridgeUser}
-                        isActivated={this.state.isTeamActivated}
-                        handleKeySaved={this.handleKeySaved} 
-                    />
-                </InxtContainer>
+
 
             </div>
         );
@@ -232,22 +245,22 @@ class Teams extends React.Component<Props, State> {
         return (
             <div className="admin-workspace">
 
-                <InxtContainer>
-                    <XCloud 
-                        isAuthenticated={true}
-                        user={this.state.team.bridgeUser}
-                        isActivated={this.state.isTeamActivated}
-                        handleKeySaved={this.handleKeySaved} 
-                    />
-                </InxtContainer>
+
 
             </div>
         ); 
     }
 
-    handleKeySaved = (user: JSON) => {
-        localStorage.setItem('xUser', JSON.stringify(user));
+    formRegisterSubmit(e: any) {
+        e.preventDefault();
+
+        if (this.state.email.length > 0) {
+            saveTeamsMembers(this.state.idTeam, this.state.email).then((teamsMembers) => {
+                console.log(teamsMembers);
+            }).catch((err: any) => { });
+        }
     }
+
 
     renderTeamSettings = (): JSX.Element => {
         return <div>
@@ -257,59 +270,41 @@ class Teams extends React.Component<Props, State> {
                 <Container className="login-container-box edit-password-box" style={{ minHeight: '430px', height: 'auto' }}>
                     <div className="container-register">
                         <p className="container-title edit-password" style={{ marginLeft: 0 }}>
-                            Manage your team
-                        </p>
+                            {this.state.menuTitle} your team
+                            </p>
 
-                        <Form className="form-register" onSubmit={(e: any) => {
-                            e.preventDefault();
+                        <Form className="form-register" onSubmit={(this.formRegisterSubmit.bind(this))}>
 
-                            if (this.state.emails.length > 0) {
-                                saveTeamsMembers(this.state.idTeam, this.state.emails).then((teamsMembers) => {
-                                    // TODO: Notify user about result. e.x. "Invitations sent"
-                                    console.log(teamsMembers);
-                                }).catch((err: any) => { });
-                            }
-                        }} >
                             <Form.Row>
                                 <Form.Group as={Col} controlId="teamName">
-                                    <Form.Control placeholder="Team's name" name="team-name" value={this.state.teamName} onChange={this.handleChangePass} readOnly={true} />
+                                    <Form.Control placeholder="Team's name" name="team-name" value={this.state.teamName} readOnly={true} />
                                 </Form.Group>
                             </Form.Row>
 
                             <Form.Row>
                                 <Form.Group as={Col} controlId="invitedMember">
-                                    <ReactMultiEmail
-                                        placeholder="Invite members (Example: member@internxt.com)"
-                                        emails={this.state.emails}
-                                        onChange={(_emails: Array<string>) => {
-                                            this.setState({ emails: _emails });
-                                        }}
-                                        validateEmail={email => {
-                                            return isEmail(email);
-                                        }}
-                                        getLabel={(
-                                            email: string,
-                                            index: number,
-                                            removeEmail: (index: number) => void,
-                                        ) => {
-                                            return (
-                                                <div data-tag key={index}>
-                                                    {email}
-                                                    <span data-tag-handle onClick={() => {
-                                                        removeEmail(index)
-                                                    }}>
-                                                        <i className="far fa-trash-alt"></i>
-                                                    </span>
-                                                </div>
-                                            );
-                                        }}
-                                    />
+                                    <div>
+                                        <input className="mail-box" type="email" placeholder="example@example.com" value={this.state.email} onChange={this.handleEmailChange} />
+                                    </div>
+                                
+                                  
                                 </Form.Group>
                             </Form.Row>
 
                             <Form.Row className="form-register-submit">
                                 <Form.Group as={Col}>
-                                    <Button className="on btn-block" type="submit">Save</Button>
+                                   
+                                    <Button className="send-button" type="button" onClick={() => {
+                                        const mails = this.state.email;
+                                        if (mails !== undefined) {
+                                            console.log(mails)
+                                            this.sendEmailTeamsMember(mails)
+                                        } else {
+                                            toast.warn(`Please, enter a valid email before sending out the invite`);
+                                            
+                                        }
+                                    }}>Invite</Button>
+
                                 </Form.Group>
                             </Form.Row>
                         </Form>
@@ -349,7 +344,7 @@ class Teams extends React.Component<Props, State> {
     renderActivation = (): JSX.Element => {
         return (
             <div className="activation">
-                <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />
+                <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={false} showFileButtons={false} />
               
                 <p className="logo"><img src={logo} alt="Logo" /></p>
                 <p className="container-title">Activation Team</p>

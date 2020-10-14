@@ -1,6 +1,6 @@
 import { getHeaders } from '../lib/auth';
 
-const saveTeamsMembers = (idTeam: number, members: Array<string>) => {
+const saveTeamsMembers = (idTeam: number, members: string) => {
     return new Promise((resolve, reject) => {
         fetch('/api/teams-members', {
             method: 'post',
