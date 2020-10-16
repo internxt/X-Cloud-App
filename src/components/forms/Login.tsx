@@ -131,6 +131,10 @@ class Login extends React.Component<LoginProps> {
           const hashObj = passToHash({ password: this.state.password, salt });
           const encPass = encryptText(hashObj.hash);
 
+          if (body.isTeamActivated) {
+            localStorage.setItem('xTeam', JSON.stringify(body.userTeam));
+          }
+
           fetch("/api/access", {
             method: "post",
             headers: getHeaders(true, false),
@@ -158,16 +162,19 @@ class Login extends React.Component<LoginProps> {
               uuid: data.user.uuid,
               credit: data.user.credit
             };
+            
             if (this.props.handleKeySaved) {
               this.props.handleKeySaved(user)
             }
+            
             localStorage.setItem('xToken', data.token);
             localStorage.setItem('xMnemonic', user.mnemonic);
             localStorage.setItem('xUser', JSON.stringify(user));
             this.setState({
               isAuthenticated: true,
               token: data.token,
-              user: user
+              user: user,
+              isTeam: false
             });
           })
             .catch(err => {

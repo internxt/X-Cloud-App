@@ -26,7 +26,8 @@ class App extends React.Component {
     token: "",
     user: {},
     isAuthenticated: false,
-    isActivated: false
+    isActivated: false,
+    isTeam: false 
   }
   // Method for set user in props.user and localStorage
   handleKeySaved = (user: JSON) => {
@@ -75,7 +76,8 @@ class App extends React.Component {
             isAuthenticated={this.state.isAuthenticated}
             user={this.state.user}
             isActivated={this.state.isActivated}
-            handleKeySaved={this.handleKeySaved} />
+            handleKeySaved={this.handleKeySaved} 
+            isTeam={this.state.isTeam}/>
           } />
           <Route exact path='/new' render={(props: any) => <New {...props} />} isAuthenticated={this.state.isAuthenticated} handleKeySaved={this.handleKeySaved} />
           <Route exact path='/remove' render={(props: any) => <Remove {...props} />} isAuthenticated={this.state.isAuthenticated} handleKeySaved={this.handleKeySaved} />
