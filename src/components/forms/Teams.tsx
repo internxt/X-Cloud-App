@@ -27,8 +27,9 @@ interface Props {
 
 interface State {
     user: {
-        isAdmin: boolean,
-        isTeamMember: boolean
+        email: string,
+        isAdmin: Boolean,
+        isTeamMember: Boolean
     }
     team: {
         bridgeUser: string,
@@ -50,6 +51,7 @@ class Teams extends React.Component<Props, State> {
         super(props);
         this.state = {
             user: {
+                email: '',
                 isAdmin: false,
                 isTeamMember: false
             },
@@ -120,46 +122,6 @@ class Teams extends React.Component<Props, State> {
         });
     }
 
-    isBridgeUserActivated = async (userEmail) => {
-        return new Promise((resolve, reject) => {
-            fetch(`/api/teams/${userEmail}`, {
-                method: 'get',
-                headers: getHeaders(true, false)
-            }).then((team) => {
-                console.log("TEAM", team) //debug
-                if (team) {
-                    team.json().then((teamData) => {
-
-                        const bridgeUser = teamData.bridge_user;
-                        console.log("BRIDGE USER", bridgeUser); //debug 
-                        let teamUser = this.state.team;
-                        teamUser.bridgeUser = bridgeUser;
-                        this.setState({ team: teamUser });
-
-                        fetch(`/api/user/isactivated/${bridgeUser}`, {
-                            method: 'get',
-                            headers: getHeaders(true, false)
-                        }).then((responseTeam) => {
-
-                            responseTeam.json().then((teamProps) => {
-                                console.log("TEAM PROPS", teamProps); //debug 
-                                resolve(teamProps);
-                            }).catch((error) => {
-                                console.log('No team props', error);
-                            })
-                        }).catch((err) => { reject(err) })
-                    }).catch((err) => { console.log("No responseTeam", err) })
-                } else {
-                    reject("CANNOT READ TEAM ACTIVATION")
-                }
-
-            }).catch((err) => {
-                reject(err);
-            })
-
-        })
-    }
-
     componentDidMount() {
         if (!this.isLoggedIn()) {
             history.push('/login');
@@ -194,6 +156,27 @@ class Teams extends React.Component<Props, State> {
             });
         })
     }
+
+    isBridgeUserActivated = async (bridgeUserEmail) => {
+        return await new Promise( (resolve, reject) => {                       
+            console.log("BRIDGE USER", bridgeUserEmail); //debug                       
+    
+            fetch(`/api/user/isactivated/${bridgeUserEmail}`, {
+                method: 'get',
+                headers: getHeaders(true, false)
+            }).then((responseTeam) => {                           
+                responseTeam.json().then((teamProps) => {
+                    console.log("TEAM PROPS", teamProps); //debug 
+                    resolve(teamProps);
+                }).catch((error) => {
+                    console.log('No team props', error);
+                })
+            }).catch((err) => { reject(err) })                                                   
+
+        });
+    }
+
+    
 
     sendEmailTeamsMember = (mail) => {
         fetch('/api/team-invitations', {
@@ -422,6 +405,7 @@ class Teams extends React.Component<Props, State> {
                 }}>Re-send activation email</button>
             </div>);
     }
+
 
     render() {
         return (
