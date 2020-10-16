@@ -23,6 +23,8 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import axios from 'axios'
 
+import { analytics, getUuid } from '../../lib/analytics'
+
 class XCloud extends React.Component {
   constructor(props) {
     super(props);
@@ -196,6 +198,10 @@ class XCloud extends React.Component {
             const body = await res.json();
             throw body.error ? body.error : 'createFolder error';
           }
+          analytics.track({
+            userId: getUuid(),
+            event: 'folder-created'
+          })
           this.getFolderContent(this.state.currentFolderId, false);
         })
         .catch((err) => {
@@ -227,29 +233,31 @@ class XCloud extends React.Component {
   getNewFolderName = (name) => {
     let exists = true;
     let i = 1;
-    let newName;
     const currentFolder = this.state.currentCommanderItems.filter((item) => item.isFolder);
+    let finalName;
     while (exists) {
-      newName = this.getNextNewName(name, i);
+      const newName = this.getNextNewName(name, i);
       exists = currentFolder.find((folder) => folder.name === newName);
       i += 1;
+      finalName = newName
     }
 
-    return newName;
+    return finalName;
   };
 
   getNewFileName = (name, type) => {
     let exists = true;
     let i = 1;
-    let newName;
+    let finalName;
     const currentFiles = this.state.currentCommanderItems.filter((item) => !item.isFolder);
     while (exists) {
-      newName = this.getNextNewName(name, i);
+      const newName = this.getNextNewName(name, i);
       exists = currentFiles.find((file) => file.name === newName && file.type === type);
+      finalName = newName
       i += 1;
     }
 
-    return newName;
+    return finalName;
   };
 
   getNewName = (name, type) => {
@@ -328,6 +336,10 @@ class XCloud extends React.Component {
         if (res.status !== 200) {
           throw res;
         } else {
+          analytics.track({
+            userId: getUuid(),
+            event: 'folder-opened'
+          })
           return res.json();
         }
       })
@@ -393,6 +405,10 @@ class XCloud extends React.Component {
         body: data,
       })
         .then(() => {
+          analytics.track({
+            userId: getUuid(),
+            event: 'folder-rename'
+          })
           this.getFolderContent(this.state.currentFolderId);
         })
         .catch((error) => {
@@ -405,6 +421,10 @@ class XCloud extends React.Component {
         body: data,
       })
         .then(() => {
+          analytics.track({
+            userId: getUuid(),
+            event: 'file-rename'
+          })
           this.getFolderContent(this.state.currentFolderId);
         })
         .catch((error) => {
@@ -469,6 +489,10 @@ class XCloud extends React.Component {
         if (!success) {
           toast.warn(`Error moving ${keyOp.toLowerCase()} '${response.item.name}`);
         } else {
+          analytics.track({
+            event: `${keyOp}-move`,
+            userId: getUuid()
+          })
           // Remove myself
           let currentCommanderItems = this.state.currentCommanderItems.filter((commanderItem) =>
             item.isFolder
@@ -501,6 +525,10 @@ class XCloud extends React.Component {
         })
         return config
       })
+      analytics.track({
+        userId: getUuid(),
+        event: 'file-download-start'
+      })
       axios.get(`/api/storage/file/${id}`, {
         onDownloadProgress(pe) {
           if (pcb) {
@@ -515,6 +543,10 @@ class XCloud extends React.Component {
         if (res.status !== 200) {
           throw res
         }
+        analytics.track({
+          userId: getUuid(),
+          event: 'file-download-finished'
+        })
         return { blob: res.data, filename: Buffer.from(res.headers['x-file-name'], 'base64').toString('utf8') }
       }).then(({ blob, filename }) => {
         fileDownload(blob, filename);
@@ -528,25 +560,25 @@ class XCloud extends React.Component {
             const json = JSON.parse(result)
             toast.warn(
               'Error downloading file:\n' +
-                err.response.status +
-                ' - ' +
-                err.response.statusText +
-                '\n' +
-                json.message +
-                '\nFile id: ' +
-                id,
+              err.response.status +
+              ' - ' +
+              err.response.statusText +
+              '\n' +
+              json.message +
+              '\nFile id: ' +
+              id,
             );
           }).catch(textErr => {
             toast.warn(
               'Error downloading file:\n' +
-                err.response.status +
-                ' - ' +
-                err.response.statusText +
-                '\nFile id: ' +
-                id,
-            );  
+              err.response.status +
+              ' - ' +
+              err.response.statusText +
+              '\nFile id: ' +
+              id,
+            );
           })
-        } 
+        }
         resolve()
       })
     });
@@ -564,7 +596,10 @@ class XCloud extends React.Component {
       }
 
       console.log('Upload file:', file.name);
-
+      analytics.track({
+        userId: getUuid(),
+        event: 'file-upload-start'
+      })
       const uploadUrl = `/api/storage/folder/${parentFolderId}/upload`;
 
       // Headers with Auth & Mnemonic
@@ -588,6 +623,10 @@ class XCloud extends React.Component {
             console.error('Upload response data is not a JSON', err);
           }
           if (data) {
+            analytics.track({
+              userId: getUuid(),
+              event: 'file-upload-finished'
+            })
             return { res: res, data: data };
           } else {
             throw res;
@@ -722,9 +761,13 @@ class XCloud extends React.Component {
         ? `/api/storage/folder/${v.id}`
         : `/api/storage/folder/${v.folderId}/file/${v.id}`;
       return (next) =>
-        fetch(url, fetchOptions)
-          .then(() => next())
-          .catch(next);
+        fetch(url, fetchOptions).then(() => {
+          analytics.track({
+            event: (v.isFolder ? 'folder' : 'file') + '-delete',
+            userId: getUuid()
+          })
+          next()
+        }).catch(next);
     });
 
     async.parallel(deletionRequests, (err, result) => {
