@@ -158,25 +158,25 @@ class Teams extends React.Component<Props, State> {
     }
 
     isBridgeUserActivated = async (bridgeUserEmail) => {
-        return await new Promise( (resolve, reject) => {                       
+        return await new Promise((resolve, reject) => {
             console.log("BRIDGE USER", bridgeUserEmail); //debug                       
-    
+
             fetch(`/api/user/isactivated/${bridgeUserEmail}`, {
                 method: 'get',
                 headers: getHeaders(true, false)
-            }).then((responseTeam) => {                           
+            }).then((responseTeam) => {
                 responseTeam.json().then((teamProps) => {
                     console.log("TEAM PROPS", teamProps); //debug 
                     resolve(teamProps);
                 }).catch((error) => {
                     console.log('No team props', error);
                 })
-            }).catch((err) => { reject(err) })                                                   
+            }).catch((err) => { reject(err) })
 
         });
     }
 
-    
+
 
     sendEmailTeamsMember = (mail) => {
         fetch('/api/team-invitations', {
@@ -189,7 +189,7 @@ class Teams extends React.Component<Props, State> {
             if (res.response.status !== 200) {
                 throw res.data;
             } else {
-                toast.warn(`Invitation email sent to ${mail}`);
+                toast.info(`Invitation email sent to ${mail}`);
             }
         }).catch(err => {
             toast.warn(`Error: ${err.error ? err.error : 'Internal Server Error'}`);
@@ -206,12 +206,6 @@ class Teams extends React.Component<Props, State> {
     formRegisterSubmit = (e: any) => {
         e.preventDefault();
 
-        if (this.state.email.length > 0) {
-            saveTeamsMembers(this.state.idTeam, this.state.email).then((teamsMembers) => {
-                // TODO: Notify user about result. e.x. "Invitations sent"
-                console.log(teamsMembers);
-            }).catch((err: any) => { });
-        }
     }
 
 
@@ -314,6 +308,18 @@ class Teams extends React.Component<Props, State> {
         return emailPattern.test(email.toLowerCase());
     }
 
+    sendInvitation = (e: any) => {
+        e.preventDefault()
+        const mails = this.state.email;
+        if (mails !== undefined && this.validateEmailInvitations(mails)) {
+            this.sendEmailTeamsMember(mails)
+        } else {
+            toast.warn(`Please, enter a valid email before sending out the invite`);
+        }
+        return
+    }
+
+
     renderTeamSettings = (): JSX.Element => {
         return (<div>
             <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />
@@ -324,7 +330,7 @@ class Teams extends React.Component<Props, State> {
                             {this.state.menuTitle} your team
                             </p>
 
-                        <Form className="form-register" onSubmit={(this.formRegisterSubmit.bind(this))}>
+                        <Form className="form-register" onSubmit={this.sendInvitation}>
                             <Form.Row>
                                 <Form.Group as={Col} controlId="teamName">
                                     <Form.Control placeholder="Team's name" name="team-name" value={this.state.teamName} onChange={this.handleChangePass} readOnly={true} /><p>
@@ -335,7 +341,7 @@ class Teams extends React.Component<Props, State> {
                             <Form.Row>
                                 <Form.Group as={Col} controlId="invitedMember">
                                     <div>
-                                        <input className="mail-box" type="email" placeholder="example@example.com" value={this.state.email} onChange={this.handleEmailChange} />
+                                        <input className="mail-box" type="email" required placeholder="example@example.com" value={this.state.email} onChange={this.handleEmailChange} />
                                     </div>
                                 </Form.Group>
                             </Form.Row>
@@ -343,14 +349,7 @@ class Teams extends React.Component<Props, State> {
                             <Form.Row className="form-register-submit">
                                 <Form.Group as={Col}>
 
-                                    <Button className="send-button" type="button" onClick={() => {
-                                        const mails = this.state.email;
-                                        if (mails !== undefined && this.validateEmailInvitations(mails)) {
-                                            this.sendEmailTeamsMember(mails)
-                                        } else {
-                                            toast.warn(`Please, enter a valid email before sending out the invite`);
-                                        }
-                                    }}>Invite</Button>
+                                    <Button className="send-button" type="submit">Invite</Button>
 
                                 </Form.Group>
                             </Form.Row>
