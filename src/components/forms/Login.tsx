@@ -144,7 +144,7 @@ class Login extends React.Component<LoginProps> {
           }).then(async res => {
             return { res, data: await res.json() };
           }).then(res => {
-            console.log("RESPONSE: ", res); //debug
+            console.log("ACCESS RESPONSE: ", res.data); //debug
             if (res.res.status !== 200) {
               throw new Error(res.data.error ? res.data.error : res.data);
             }
@@ -166,16 +166,15 @@ class Login extends React.Component<LoginProps> {
               this.props.handleKeySaved(user)
             }
 
-            if (data.team.isActivated) {
+            if (data.userTeam && data.userTeam.isActivated) {
               const team = {
-                user: data.team.bridge_user,
-                password: data.team.bridge_password,
-                mnemonic: data.team.bridge_mnemonic,
-                admin: data.team.admin,
-                root_folder_id: data.team.rootFolderId
+                user: data.userTeam.bridge_user,
+                password: data.userTeam.bridge_password,
+                mnemonic: data.userTeam.bridge_mnemonic,
+                admin: data.userTeam.admin,
+                root_folder_id: data.userTeam.root_folder_id
               }
               localStorage.setItem('xTeam', JSON.stringify(team));
-              console.log("TEAM AT LOCALSTORAGE: ", team);
             }
             
             localStorage.setItem('xToken', data.token);

@@ -32,6 +32,7 @@ class XCloud extends React.Component {
       isAuthorized: false,
       isInitialized: false,
       isActivated: null,
+      isTeam: this.props.isTeam,
       token: '',
       chooserModalOpen: false,
       rateLimitModal: false,
@@ -58,30 +59,28 @@ class XCloud extends React.Component {
           // If user is signed in but is not activated set property isActivated to false
           const isActivated = data.activated;
           if (isActivated) {
-            if (!this.props.user.root_folder_id) {
+            if (!this.props.user.root_folder_id && data.activatedTeam) {
               // Initialize user in case that is not done yet
-              this.userInitialization()
+              const llamar_a = this.state.isTeam ? this.teamInitialization : this.userInitialization
+              llamar_a()
                 .then((resultId) => {
-                  this.getFolderContent(resultId);
+                  console.log("ROOT FOLDER CREADA CON ID:  ", resultId); //debug  
                 })
                 .catch((error) => {
                   const errorMsg = error ? error : '';
                   toast.warn('User initialization error ' + errorMsg);
                   history.push('/login');
                 });
-            } else {
+            } else if (this.props.user.root_folder_id) {
               this.getFolderContent(this.props.user.root_folder_id);
+              this.setState({ currentFolderId: this.props.user.root_folder_id});
+            }
+
+            if (!data.activatedTeam) {
+              // TODO: Push Team component with activation template.
             }
 
             this.setState({ isActivated, isInitialized: true });
-          }
-
-          if (data.activatedTeam) {
-            this.teamInitialization(data.teamId).then((teamInit) => {
-              this.getFolderContent(this.props.user.root_folder_id);
-            }).catch((err) => {
-              console.log(err);
-            });
           }
         })
         .catch((error) => {
@@ -92,29 +91,55 @@ class XCloud extends React.Component {
     }
   };
 
-  teamInitialization = (idTeam) => {
+  componentDidUpdate(prevProps) {
+    console.log("PROPS", this.props.isTeam);
+    /*
+    if (this.props.isTeam !== prevProps.isTeam) {
+      this.setState({ isTeam: this.props.isTeam });
+      console.log("IS TEAM WORKSPACE:", this.state.isTeam); //debug
+      if (this.state.isTeam) {
+        const team = JSON.parse(localStorage.getItem("xTeam"));
+        console.log("EQUIPO: ", team);
+        if (!team.root_folder_id) {
+          console.log("NO EXISTE ROOT FOLDER")
+          this.teamInitialization();
+        } else {
+          console.log("CARGO TEAM WORKSPACE")
+          this.getFolderContent(team.root_folder_id);
+          this.setState({ currentFolderId: JSON.parse(localStorage.getItem("xTeam").root_folder_id)})
+        }  
+      } else {
+        console.log("CARGO WORKSPACE PERSONAL")
+        this.getFolderContent(JSON.parse(localStorage.getItem("xUser").root_folder_id))
+        this.setState({ currentFolderId: JSON.parse(localStorage.getItem("xUser").root_folder_id)})
+      }
+    }*/
+  }
+
+
+  teamInitialization = () => {
     return new Promise((resolve, reject) => {
-      fetch('/api/initialize', {
+      fetch('/api/teams/initialize', {
         method: 'post',
-        headers: getHeaders(true, true),
+        headers: getHeaders(true, true, true),
         body: JSON.stringify({
-          email: this.props.user.email,
-          mnemonic: localStorage.getItem('xMnemonic'),
-          idTeam: idTeam
+          email: JSON.parse(localStorage.getItem("xTeam") || "{}").user,
+          mnemonic: JSON.parse(localStorage.getItem("xTeam") || "{}").mnemonic
         }),
-      })
-        .then((response) => {
-          if (response.status === 200) {
-            response.json().then((r_body) => {
-              resolve(r_body);
-            });
-          } else {
-            reject(null);
-          }
-        })
-        .catch((error) => {
-          reject(error);
-        });
+      }).then((response) => {
+        if (response.status === 200) {
+          response.json().then((body) => {
+            resolve(body);
+          });
+        } else {
+          reject(null);
+        }
+      }).then(folderId => {
+        console.log("ACCIONO GETFOLDERCONTENT CON ID: ", folderId);
+        this.getFolderContent(folderId);
+      }).catch((error) => {
+        reject(error);
+      });
     });
   }
 
@@ -142,6 +167,8 @@ class XCloud extends React.Component {
           } else {
             reject(null);
           }
+        }).then(folderId => {
+          this.getFolderContent(folderId)
         })
         .catch((error) => {
           reject(error);
@@ -159,6 +186,18 @@ class XCloud extends React.Component {
         console.log('Error getting user activation');
       });
   };
+
+  isTeamActivated = () => {
+    const team = JSON.parse(localStorage.getItem('xTeam'));
+    return fetch(`/api/team/isactivated/${team.bridge_user}`, {
+      method: 'get',
+      headers: getHeaders(true, false),
+    })
+      .then((response) => response.json())
+      .catch((error) => {
+        console.log('Error getting user activation');
+      });
+  }
 
   setSortFunction = (newSortFunc) => {
     // Set new sort function on state and call getFolderContent for refresh files list
@@ -803,6 +842,32 @@ class XCloud extends React.Component {
     history.push('/storage');
   };
 
+  handleChangeWorkspace = (event) => {
+    if (event) {
+      const team = JSON.parse(localStorage.getItem("xTeam"));
+      console.log("EQUIPO: ", team);
+      if (!team.root_folder_id) {
+        console.log("NO EXISTE ROOT FOLDER")
+        this.teamInitialization();
+      } else {
+        console.log("CARGO TEAM WORKSPACE")
+        this.getFolderContent(team.root_folder_id);
+        this.setState({ 
+          currentFolderId: team.root_folder_id,
+          isTeam: true
+        })
+      }
+    } else {
+      const user = JSON.parse(localStorage.getItem("xUser"));
+      console.log("CARGO WORKSPACE PERSONAL")
+      this.getFolderContent(user.root_folder_id)
+      this.setState({ 
+        currentFolderId: user.root_folder_id,
+        isTeam: false
+      })
+    }
+  }
+
   render() {
     // Check authentication
     if (this.props.isAuthenticated && this.state.isActivated && this.state.isInitialized) {
@@ -817,6 +882,9 @@ class XCloud extends React.Component {
             deleteItems={this.deleteItems}
             setSearchFunction={this.setSearchFunction}
             shareItem={this.shareItem}
+            teamSettings={this.teamSettings}
+            handleChangeWorkspace={this.handleChangeWorkspace}
+            isTeam={this.state.isTeam}
             style
           />
 
@@ -834,6 +902,7 @@ class XCloud extends React.Component {
             updateMeta={this.updateMeta}
             currentFolderId={this.state.currentFolderId}
             getFolderContent={this.getFolderContent}
+            isTeam={this.state.isTeam}
           />
 
           {this.getSelectedItems().length > 0 && this.state.popupShareOpened ? (
