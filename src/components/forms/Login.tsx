@@ -131,9 +131,7 @@ class Login extends React.Component<LoginProps> {
           const hashObj = passToHash({ password: this.state.password, salt });
           const encPass = encryptText(hashObj.hash);
 
-          if (body.isTeamActivated) {
-            localStorage.setItem('xTeam', JSON.stringify(body.userTeam));
-          }
+          
 
           fetch("/api/access", {
             method: "post",
@@ -146,6 +144,7 @@ class Login extends React.Component<LoginProps> {
           }).then(async res => {
             return { res, data: await res.json() };
           }).then(res => {
+            console.log("RESPONSE: ", res); //debug
             if (res.res.status !== 200) {
               throw new Error(res.data.error ? res.data.error : res.data);
             }
@@ -161,10 +160,22 @@ class Login extends React.Component<LoginProps> {
               lastname: data.user.lastname,
               uuid: data.user.uuid,
               credit: data.user.credit
-            };
+            };           
             
             if (this.props.handleKeySaved) {
               this.props.handleKeySaved(user)
+            }
+
+            if (data.team.isActivated) {
+              const team = {
+                user: data.team.bridge_user,
+                password: data.team.bridge_password,
+                mnemonic: data.team.bridge_mnemonic,
+                admin: data.team.admin,
+                root_folder_id: data.team.rootFolderId
+              }
+              localStorage.setItem('xTeam', JSON.stringify(team));
+              console.log("TEAM AT LOCALSTORAGE: ", team);
             }
             
             localStorage.setItem('xToken', data.token);
