@@ -92,27 +92,9 @@ class XCloud extends React.Component {
   };
 
   componentDidUpdate(prevProps) {
-    console.log("PROPS", this.props.isTeam);
     /*
     if (this.props.isTeam !== prevProps.isTeam) {
       this.setState({ isTeam: this.props.isTeam });
-      console.log("IS TEAM WORKSPACE:", this.state.isTeam); //debug
-      if (this.state.isTeam) {
-        const team = JSON.parse(localStorage.getItem("xTeam"));
-        console.log("EQUIPO: ", team);
-        if (!team.root_folder_id) {
-          console.log("NO EXISTE ROOT FOLDER")
-          this.teamInitialization();
-        } else {
-          console.log("CARGO TEAM WORKSPACE")
-          this.getFolderContent(team.root_folder_id);
-          this.setState({ currentFolderId: JSON.parse(localStorage.getItem("xTeam").root_folder_id)})
-        }  
-      } else {
-        console.log("CARGO WORKSPACE PERSONAL")
-        this.getFolderContent(JSON.parse(localStorage.getItem("xUser").root_folder_id))
-        this.setState({ currentFolderId: JSON.parse(localStorage.getItem("xUser").root_folder_id)})
-      }
     }*/
   }
 
@@ -845,25 +827,27 @@ class XCloud extends React.Component {
   handleChangeWorkspace = (event) => {
     if (event) {
       const team = JSON.parse(localStorage.getItem("xTeam"));
-      console.log("EQUIPO: ", team);
+      console.log("EQUIPO: ", team); // debug
       if (!team.root_folder_id) {
-        console.log("NO EXISTE ROOT FOLDER")
+        console.log("NO EXISTE ROOT FOLDER") // debug
         this.teamInitialization();
       } else {
-        console.log("CARGO TEAM WORKSPACE")
+        console.log("CARGO TEAM WORKSPACE") // debug
         this.getFolderContent(team.root_folder_id);
         this.setState({ 
           currentFolderId: team.root_folder_id,
-          isTeam: true
+          isTeam: true,
+          namePath: []
         })
       }
     } else {
       const user = JSON.parse(localStorage.getItem("xUser"));
-      console.log("CARGO WORKSPACE PERSONAL")
+      console.log("CARGO WORKSPACE PERSONAL") // debug
       this.getFolderContent(user.root_folder_id)
       this.setState({ 
         currentFolderId: user.root_folder_id,
-        isTeam: false
+        isTeam: false,
+        namePath: []
       })
     }
   }
