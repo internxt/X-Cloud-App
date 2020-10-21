@@ -31,18 +31,21 @@ class FileCommander extends React.Component {
       namePath: this.props.namePath,
       selectedSortType: SORT_TYPES.DATE_ADDED,
       dragDropStyle: '',
-      treeSize: 0
+      treeSize: 0,
+      isTeam: this.props.isTeam
     };
   }
 
   componentDidUpdate(prevProps) {
     if (
       this.props.currentCommanderItems !== prevProps.currentCommanderItems ||
-      this.props.namePath !== prevProps.namePath
+      this.props.namePath !== prevProps.namePath ||
+      this.props.isTeam !== prevProps.isTeam
     ) {
       this.setState({
         currentCommanderItems: this.props.currentCommanderItems,
         namePath: this.props.namePath,
+        isTeam: this.props.isTeam
       });
     }
   }
