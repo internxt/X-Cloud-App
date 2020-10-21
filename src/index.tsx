@@ -8,6 +8,7 @@ import history from './lib/history'
 import 'bootstrap/dist/css/bootstrap.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
+
 ReactDOM.render(<Router history={history}><App /></Router>, document.getElementById('root'));
 
 // If you want your app to work offline and load faster, you can change

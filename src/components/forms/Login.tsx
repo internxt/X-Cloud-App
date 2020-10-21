@@ -12,6 +12,8 @@ import { getHeaders } from '../../lib/auth'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
+import { analytics } from '../../lib/analytics';
+
 interface LoginProps {
   email?: string
   password?: string
@@ -180,12 +182,18 @@ class Login extends React.Component<LoginProps> {
             localStorage.setItem('xToken', data.token);
             localStorage.setItem('xMnemonic', user.mnemonic);
             localStorage.setItem('xUser', JSON.stringify(user));
+
             this.setState({
               isAuthenticated: true,
               token: data.token,
               user: user,
               isTeam: false
             });
+
+            analytics.identify(data.user.uuid, {
+              event: 'user-signup',
+              email: data.user.email
+            })
           })
             .catch(err => {
               toast.warn(`"${err.error ? err.error : err}"`);
@@ -203,8 +211,8 @@ class Login extends React.Component<LoginProps> {
       }
     })
       .catch(err => {
-        console.error("Login error. " + err);
-        toast.warn('Login error');
+        console.error("Login error. " + err)
+        toast.warn('Login error')
       });
   }
 

@@ -15,6 +15,8 @@ import PrettySize from 'prettysize';
 
 import HeaderButton from './HeaderButton';
 
+import { analytics, getUserData, getUuid } from '../../lib/analytics'
+
 import "./NavigationBar.scss";
 import history from '../../lib/history';
 
@@ -79,7 +81,26 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         };
     }
 
-    componentDidMount(): void {
+    identifyPlan(bytes: number): string {
+        if (bytes <= 1073741824) {
+            return "Free 2GB"
+        }
+        if (bytes === 21474836480) {
+            return "20GB"
+        }
+
+        if (bytes === 2199023255552) {
+            return "2TB"
+        }
+
+        if (bytes === 214748364800) {
+            return "200GB"
+        }
+
+        return "Unknown"
+    }
+
+    componentDidMount() {
         let user = null;
         try {
             user = JSON.parse(localStorage.xUser).email;
@@ -134,6 +155,10 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         ).then(res => {
             return res.json();
         }).then(res2 => {
+            analytics.identify(getUuid(), {
+                email: getUserData().email,
+                plan: this.identifyPlan(res2.maxSpaceBytes)
+            })
             this.setState({ barLimit: res2.maxSpaceBytes })
         }).catch(err => {
             console.log('Error on fetch /api/limit', err);
@@ -294,7 +319,14 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                             </div>
                             <Dropdown.Divider />
                             <div className="dropdown-menu-group">
-                                <Dropdown.Item onClick={(e) => { localStorage.clear(); history.push('/login'); }}>Sign out</Dropdown.Item>
+                                <Dropdown.Item onClick={(e) => {
+                                    analytics.track('signout', {
+                                        userId: getUuid(),
+                                        email: getUserData().email
+                                    })
+                                    localStorage.clear();
+                                    history.push('/login');
+                                }}>Sign out</Dropdown.Item>
                             </div>
                         </Dropdown.Menu>
                     </Dropdown>

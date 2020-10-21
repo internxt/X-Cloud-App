@@ -8,12 +8,18 @@ interface Props {
     match: any
 }
 
-interface State {}
+interface State {
+  isTeamActivated: Boolean | null
+  isTeamError: Boolean
+}
 
 class JoinTeam extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
-        this.state = {};
+        this.state = { isTeamActivated: null,
+          isTeamError: false
+        };
+        this.redirect = this.redirect.bind(this)
     }
 
     componentDidMount() {
@@ -21,29 +27,42 @@ class JoinTeam extends React.Component<Props, State> {
     }
 
     joinToTheTeam(token) {
-        fetch('/api/team-invitation', {
-            method: 'POST',
-            headers: getHeaders(false, false),
-            body: JSON.stringify({
-                token: token
-            })
-          }).then(async res => {
-            const data = await res.json();
 
-            if (res.status !== 200) {
-              throw new Error(data.error ? data.error : 'Error joinning to the team');
-            }
-
-            return data;
-
-          }).then((res) => {
-            toast.info("You've been joined succesfully to the team!");
+       fetch(`/api/teams/join/${token}`, {
+            method: 'post',
+            headers: getHeaders(false, false)
+          }).then(response => {
+            if (response.status === 200) {
+              this.setState({ isTeamActivated: true});
+              toast.info("You've been joined succesfully to the team!");
             history.push('/');
-          }).catch(err => {
-            toast.warn(`"${err}"`);
-            history.push('/');
-          });
-    }
+          } else {
+            console.log(response)
+            // Wrong activation
+            this.setState({ isTeamActivated: false })
+            console.log('error', token)
+            toast.info("You've been NOT joined succesfully to the team!");
+            console.log('error', token)
+          }
+
+        }).catch(error => {
+          this.setState({ isTeamActivated: false })
+          console.log('Activation error: ' + error);
+          
+        })
+      }
+      
+      redirect = () => {
+
+        if (this.state.isTeamActivated) {
+          toast.info('You have been joined succesfully to the team!', {className: 'xcloud-toast-info'})
+        } else {
+          toast.warn('Invalid token code')
+          toast.warn('Your activation code is invalid. Maybe you have used this link before and your account is already activated.')
+        }
+        history.push("/");
+      }
+    
 
     render() {
         return(<div />)
