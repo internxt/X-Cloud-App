@@ -32,7 +32,7 @@ interface NavigationBarProps {
     deleteItems?: any
     shareItem?: any
     uploadHandler?: any
-    teamSettings?: any
+    showTeamSettings?: any
     isTeam: Boolean
     handleChangeWorkspace?: any
 }
@@ -227,7 +227,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                 <HeaderButton icon={deleteFile} name="Delete" clickHandler={this.props.deleteItems} />
                 <HeaderButton icon={share} name="Share" clickHandler={this.props.shareItem} />
                 <input id="uploadFileControl" type="file" onChange={this.props.uploadHandler} multiple={true} />
-                {this.props.isTeam ? <HeaderButton icon={teams} name="Team settings" clickHandler={this.props.teamSettings} /> : ''}
+                {this.props.isTeam ? <HeaderButton icon={teams} name="Team settings" clickHandler={this.props.showTeamSettings} /> : ''}
             </Nav>
         })
     }
@@ -245,6 +245,19 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         console.log(e);
         this.props.handleChangeWorkspace && this.props.handleChangeWorkspace(event);
     }
+
+
+    handleTeamSection() {
+        const team = JSON.parse(localStorage.xTeam);
+        const user = JSON.parse(localStorage.xUser);
+ 
+        if (team.admin === user.email) {
+            history.push("/teams/password");
+        } else {
+            history.push("/teams");
+        }
+    }
+
 
     render() {
         let user: any = null;
@@ -284,7 +297,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                                 <Dropdown.Item onClick={(e) => { history.push('/settings'); }}>Settings</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => { history.push('/security'); }}>Security</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => { history.push('/invite'); }}>Referrals</Dropdown.Item>
-                                <Dropdown.Item onClick={(e) => { history.push('/teams'); }}>Teams</Dropdown.Item>
+                                <Dropdown.Item onClick={(e) => { history.push('/teams/password'); }}>Teams</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => {
                                     function getOperatingSystem() {
                                         let operatingSystem = 'Not known';

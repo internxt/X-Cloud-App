@@ -118,9 +118,9 @@ class XCloud extends React.Component {
         } else {
           reject(null);
         }
-      }).then(folderId => {
-        console.log("ACCIONO GETFOLDERCONTENT CON ID: ", folderId);
-        this.getFolderContent(folderId);
+      }).then(folder => {
+        console.log("ACCIONO GETFOLDERCONTENT CON ID: ", folder.id);
+        this.getFolderContent(folder.id);
       }).catch((error) => {
         reject(error);
       });
@@ -871,7 +871,9 @@ class XCloud extends React.Component {
     if (event) {
       const team = JSON.parse(localStorage.getItem("xTeam"));
       console.log("EQUIPO: ", team); // debug
-      if (!team.root_folder_id) {
+      if (!team) {
+        history.push("/teams");
+      } else if (team && !team.root_folder_id) {
         console.log("NO EXISTE ROOT FOLDER") // debug
         this.teamInitialization();
       } else {
@@ -885,14 +887,18 @@ class XCloud extends React.Component {
       }
     } else {
       const user = JSON.parse(localStorage.getItem("xUser"));
-      console.log("CARGO WORKSPACE PERSONAL") // debug
-      this.getFolderContent(user.root_folder_id)
+      !user.root_folder_id ? this.userInitialization() : this.getFolderContent(user.root_folder_id);
+      console.log("CARGO WORKSPACE PERSONAL") // debug    
       this.setState({ 
         currentFolderId: user.root_folder_id,
         isTeam: false,
         namePath: []
       })
     }
+  }
+
+  showTeamSettings = () => {
+    history.push("/teams/settings");
   }
 
   render() {
@@ -909,7 +915,7 @@ class XCloud extends React.Component {
             deleteItems={this.deleteItems}
             setSearchFunction={this.setSearchFunction}
             shareItem={this.shareItem}
-            teamSettings={this.teamSettings}
+            showTeamSettings={this.showTeamSettings}
             handleChangeWorkspace={this.handleChangeWorkspace}
             isTeam={this.state.isTeam}
             style
