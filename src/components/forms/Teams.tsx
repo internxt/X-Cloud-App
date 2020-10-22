@@ -4,10 +4,7 @@ import './Login.scss';
 import './Reset.scss';
 import { Form, Col, Button } from 'react-bootstrap';
 import NavigationBar from './../navigationBar/NavigationBar';
-import { ReactMultiEmail, isEmail } from 'react-multi-email';
-import 'react-multi-email/style.css';
 import history from '../../lib/history';
-import { getTeamMembersByIdTeam, saveTeamsMembers } from './../../services/TeamMemberService';
 import InxtContainer from './../InxtContainer';
 import TeamsPlans from './../TeamPlans';
 import { getHeaders } from '../../lib/auth';
@@ -23,6 +20,7 @@ import logo from '../../assets/drive-logo.svg';
 interface Props {
     match?: any
     isAuthenticated: Boolean
+    templateOption?: string
 }
 
 interface State {
@@ -43,12 +41,16 @@ interface State {
     visibility: string
     showDescription: boolean
     template: any
+    templateOption?: string
 }
 
 class Teams extends React.Component<Props, State> {
 
     constructor(props: Props) {
         super(props);
+
+        let renderOption = this.props.match.params.option 
+
         this.state = {
             user: {
                 email: '',
@@ -66,6 +68,7 @@ class Teams extends React.Component<Props, State> {
             menuTitle: 'Create',
             visibility: '',
             showDescription: false,
+            templateOption: renderOption,
             template: () => { }
         }
 
@@ -129,33 +132,19 @@ class Teams extends React.Component<Props, State> {
 
         const user = JSON.parse(localStorage.xUser);
 
-        this.getTeamByMember(user.email).then((team: any) => {
-            this.setState({ team: { ...this.state.team, bridgeUser: team.bridge_user } });
-
-            this.isBridgeUserActivated(team.bridge_user).then((resTeam: any) => {
-                this.setState({ isTeamActivated: resTeam.activatedTeam })
-                this.setState({ idTeam: resTeam.teamId })
-                console.log("TEAM STATE ", this.state); //debug ok
-
-                this.setState({
-                    template: this.renderPassword.bind(this)
-                });
-
-                // Muestra pantalla de contraseña de equipo
-            }).catch((err) => {
-                console.log("ERROR ACTIVATING BRIDGE USER ", err);
-                this.setState({
-                    template: this.renderActivation.bind(this)
-                });
-            })
-        }).catch((err) => {
-            // No tiene equipo
-            console.log("USER MEMBER NOT FOUND")
-            this.setState({
-                template: this.renderPlans.bind(this)
-            });
-        })
+        switch (this.state.templateOption) {
+            case 'settings':
+                this.setState({ template: this.renderTeamSettings.bind(this) })
+                break;
+            case 'password':
+                this.setState({ template: this.renderPassword.bind(this) })
+                break;
+            default:
+                this.setState({ template: this.renderPlans.bind(this) })
+                break;
+        }
     }
+
 
     isBridgeUserActivated = async (bridgeUserEmail) => {
         return await new Promise((resolve, reject) => {
@@ -264,7 +253,7 @@ class Teams extends React.Component<Props, State> {
     renderPlans = (): JSX.Element => {
         return (
             <div className="settings">
-                <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />
+                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} />
 
                 <InxtContainer>
                     <TeamsPlans handleShowDescription={this.handleShowDescription} />
@@ -275,28 +264,10 @@ class Teams extends React.Component<Props, State> {
         );
     }
 
-    renderTeamWorkspace = (): JSX.Element => {
-        return (
-            <div className="workspace">
-                <label> WORKSPACE DE MIEMBRO DE EQUIPO </label>
-            </div>
-        );
-    }
-
     handleChangeName = (event: React.FormEvent<HTMLInputElement>) => {
         this.setState({ teamName: event.currentTarget.value });
     }
 
-    renderTeamAdminWorkspace = (): JSX.Element => {
-        return <div>
-            <Route exact path='/app' render={(props) => <XCloud {...props}
-                isAuthenticated={true}
-                user={this.state.team.bridgeUser}
-                isActivated={this.state.isTeamActivated}
-                handleKeySaved={this.handleKeySaved} />
-            } />
-        </div>;
-    }
 
     handleKeySaved = (user: JSON) => {
         localStorage.setItem('xUser', JSON.stringify(user));
@@ -322,7 +293,7 @@ class Teams extends React.Component<Props, State> {
 
     renderTeamSettings = (): JSX.Element => {
         return (<div>
-            <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />
+            <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} />
             <Container className="login-main">
                 <Container className="login-container-box edit-password-box" style={{ minHeight: '430px', height: 'auto' }}>
                     <div className="container-register">
@@ -366,7 +337,7 @@ class Teams extends React.Component<Props, State> {
     renderPassword = (): JSX.Element => {
         return (
             <div className="password">
-                <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />
+                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} />
 
                 <Container className="login-container-box edit-password-box">
                     <div className="container-register">
@@ -393,7 +364,7 @@ class Teams extends React.Component<Props, State> {
     renderActivation = (): JSX.Element => {
         return (
             <div className="activation">
-                <NavigationBar navbarItems={<h5>Teams</h5>} showSettingsButton={true} showFileButtons={false} />
+                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} />
 
                 <p className="logo"><img src={logo} alt="Logo" /></p>
                 <p className="container-title">Activation Team</p>
@@ -409,7 +380,7 @@ class Teams extends React.Component<Props, State> {
     render() {
         return (
             <div>
-                {this.renderTeamSettings()}
+                {this.state.template()}
             </div>
         );
     }

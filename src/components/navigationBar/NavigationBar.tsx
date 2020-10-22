@@ -4,7 +4,6 @@ import { Nav, Navbar, Dropdown, ProgressBar, DropdownButton } from 'react-bootst
 // Assets
 import account from '../../assets/Dashboard-Icons/Account.svg';
 import logo from '../../assets/drive-logo.svg';
-import DropdownArrowIcon from '../../assets/Dashboard-Icons/Dropdown arrow.svg';
 
 import search from '../../assets/Dashboard-Icons/Search.svg';
 import uploadFileIcon from '../../assets/Dashboard-Icons/Upload.svg';
@@ -22,8 +21,6 @@ import "./NavigationBar.scss";
 import history from '../../lib/history';
 
 import { getHeaders } from '../../lib/auth';
-import { getTeamById } from './../../services/TeamService';
-import { getTeamMembersByUser } from './../../services/TeamMemberService';
 
 interface NavigationBarProps {
     navbarItems: JSX.Element
@@ -35,7 +32,7 @@ interface NavigationBarProps {
     deleteItems?: any
     shareItem?: any
     uploadHandler?: any
-    teamSettings?: any
+    showTeamSettings?: any
     isTeam: Boolean
     handleChangeWorkspace?: any
 }
@@ -145,6 +142,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             return;
         }
 
+        this.renderBar();
         if (this.props.showFileButtons) {
             this.renderFileButtons();
         }
@@ -177,7 +175,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         }).catch(err => {
             console.log('Error on fetch /api/usage', err);
         });
-        this.renderBar();
+        
     }
 
     componentDidUpdate(prevProps) {
@@ -229,7 +227,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                 <HeaderButton icon={deleteFile} name="Delete" clickHandler={this.props.deleteItems} />
                 <HeaderButton icon={share} name="Share" clickHandler={this.props.shareItem} />
                 <input id="uploadFileControl" type="file" onChange={this.props.uploadHandler} multiple={true} />
-                {this.props.isTeam ? <HeaderButton icon={teams} name="Team settings" clickHandler={this.props.teamSettings} /> : ''}
+                {this.props.isTeam ? <HeaderButton icon={teams} name="Team settings" clickHandler={this.props.showTeamSettings} /> : ''}
             </Nav>
         })
     }
@@ -247,6 +245,19 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         console.log(e);
         this.props.handleChangeWorkspace && this.props.handleChangeWorkspace(event);
     }
+
+
+    handleTeamSection() {
+        const team = JSON.parse(localStorage.xTeam);
+        const user = JSON.parse(localStorage.xUser);
+ 
+        if (team.admin === user.email) {
+            history.push("/teams/password");
+        } else {
+            history.push("/teams");
+        }
+    }
+
 
     render() {
         let user: any = null;
@@ -286,7 +297,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                                 <Dropdown.Item onClick={(e) => { history.push('/settings'); }}>Settings</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => { history.push('/security'); }}>Security</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => { history.push('/invite'); }}>Referrals</Dropdown.Item>
-                                <Dropdown.Item onClick={(e) => { history.push('/teams'); }}>Teams</Dropdown.Item>
+                                <Dropdown.Item onClick={(e) => { history.push('/teams/password'); }}>Teams</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => {
                                     function getOperatingSystem() {
                                         let operatingSystem = 'Not known';
