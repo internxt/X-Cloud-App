@@ -174,7 +174,8 @@ class Login extends React.Component<LoginProps> {
                 password: data.userTeam.bridge_password,
                 mnemonic: data.userTeam.bridge_mnemonic,
                 admin: data.userTeam.admin,
-                root_folder_id: data.userTeam.root_folder_id
+                root_folder_id: data.userTeam.root_folder_id,
+                rol: data.teamRol
               }
               localStorage.setItem('xTeam', JSON.stringify(team));
             }

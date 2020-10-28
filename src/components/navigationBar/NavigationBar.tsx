@@ -109,33 +109,8 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             }
 
             if (this.state.isTeam) {
-                this.setState({ workspace: 'Team Workspace' })
-                const idTeam = JSON.parse(localStorage.xTeam).team_id;
-
-                fetch(`/api/limit/${idTeam}`, {
-                    method: 'get',
-                    headers: getHeaders(true, false)
-                }
-                ).then(res => {
-                    return res.json();
-                }).then(res1 => {
-
-                    fetch(`/api/usage/${idTeam}`, {
-                        method: 'get',
-                        headers: getHeaders(true, false)
-                    }
-                    ).then(res => {
-                        return res.json();
-                    }).then(res2 => {
-                        this.setState({ team: { ...this.state.team, maxSpaceBytes: res1.maxSpaceBytes}});
-                        this.setState({ team: { ...this.state.team, usedSpace: res2.usedSpace}});   
-                    }).catch(err => {
-                        console.log('Error on fetch /api/usage', err);
-                    });
-
-                }).catch(err => {
-                    console.log('Error on fetch /api/limit', err);
-                });
+                this.setState({ workspace: 'Team Workspace' });
+                this.getTeamUsage();
             }
         } catch {
             history.push('/login');
@@ -143,6 +118,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         }
 
         this.renderBar();
+
         if (this.props.showFileButtons) {
             this.renderFileButtons();
         }
@@ -183,6 +159,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             this.setState({ isTeam: this.props.isTeam });
             this.renderFileButtons();
             this.renderBar();
+            this.getTeamUsage();
         }
     }
 
@@ -211,9 +188,42 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         }
     }
 
+    getTeamUsage() {
+        this.setState({ workspace: 'Team Workspace' })
+        const isTeam = true;
+
+        fetch(`/api/limit/${isTeam}`, {
+            method: 'get',
+            headers: getHeaders(true, false)
+        }).then(res => {
+            return res.json();
+        }).then(res1 => {
+            fetch(`/api/usage/${isTeam}`, {
+                method: 'get',
+                headers: getHeaders(true, false)
+            }).then(res3 => {
+                return res3.json();
+            }).then(res4 => {
+                this.setState({ team: { ...this.state.team, maxSpaceBytes: res1.maxSpaceBytes}});
+                this.setState({ team: { ...this.state.team, usedSpace: res4.usedSpace}});   
+            }).catch(err => {
+                console.log('Error on fetch /api/usage', err);
+            });
+        }).catch(err => {
+            console.log('Error on fetch /api/limit', err);
+        });
+    }
 
 
     renderFileButtons() {
+        let disabled = false;
+        if(this.props.isTeam) {
+            const team = JSON.parse(localStorage.getItem("xTeam") || "{}");
+            if (team && team.rol === 'member') {
+                disabled = true;
+            }
+        }        
+
         this.setState({
             navbarItems: <Nav className="m-auto">
                 <div className="top-bar">
@@ -222,12 +232,12 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                     </div>
                 </div>
 
-                <HeaderButton icon={uploadFileIcon} name="Upload file" clickHandler={this.props.uploadFile} />
-                <HeaderButton icon={newFolder} name="New folder" clickHandler={this.props.createFolder} />
-                <HeaderButton icon={deleteFile} name="Delete" clickHandler={this.props.deleteItems} />
-                <HeaderButton icon={share} name="Share" clickHandler={this.props.shareItem} />
+                <HeaderButton icon={uploadFileIcon} name="Upload file" clickHandler={this.props.uploadFile} disabled={disabled} />
+                <HeaderButton icon={newFolder} name="New folder" clickHandler={this.props.createFolder} disabled={disabled}/>
+                <HeaderButton icon={deleteFile} name="Delete" clickHandler={this.props.deleteItems} disabled={disabled}/>
+                <HeaderButton icon={share} name="Share" clickHandler={this.props.shareItem} disabled={disabled}/>
                 <input id="uploadFileControl" type="file" onChange={this.props.uploadHandler} multiple={true} />
-                {this.props.isTeam ? <HeaderButton icon={teams} name="Team settings" clickHandler={this.props.showTeamSettings} /> : ''}
+                {this.props.isTeam ? <HeaderButton icon={teams} name="Team settings" clickHandler={this.props.showTeamSettings} disabled={disabled}/> : ''}
             </Nav>
         })
     }
@@ -241,23 +251,21 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             this.setState({ workspace: 'Team Workspace'});
             event = true;
         }          
-        console.log("CAMBIANDO DE WORKSPACE");
-        console.log(e);
         this.props.handleChangeWorkspace && this.props.handleChangeWorkspace(event);
     }
 
 
     handleTeamSection() {
-        const team = JSON.parse(localStorage.xTeam);
+        const team = JSON.parse(localStorage.xTeam || '{}');
         const user = JSON.parse(localStorage.xUser);
  
-        if (team.admin === user.email) {
+        if (team && team.admin === user.email) {
             history.push("/teams/password");
         } else {
-            history.push("/teams");
+            history.push("/teams/plans");
         }
     }
-
+    
 
     render() {
         let user: any = null;
@@ -288,7 +296,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                 </Nav>
                 <Nav style={{ margin: '0 13px 0 0' }}>
                     <Dropdown drop="left" className="settingsButton">
-                        <Dropdown.Toggle id="1"><HeaderButton icon={account} name="Menu" /></Dropdown.Toggle>
+                        <Dropdown.Toggle id="1"><HeaderButton icon={account} name="Menu" disabled={false}/></Dropdown.Toggle>
                         <Dropdown.Menu>
                             {this.state.spaceBar}
                             <Dropdown.Divider />
@@ -297,7 +305,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                                 <Dropdown.Item onClick={(e) => { history.push('/settings'); }}>Settings</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => { history.push('/security'); }}>Security</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => { history.push('/invite'); }}>Referrals</Dropdown.Item>
-                                <Dropdown.Item onClick={(e) => { history.push('/teams/password'); }}>Teams</Dropdown.Item>
+                                <Dropdown.Item onClick={(e) => {this.handleTeamSection(); }}>Teams</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => {
                                     function getOperatingSystem() {
                                         let operatingSystem = 'Not known';

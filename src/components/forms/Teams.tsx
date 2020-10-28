@@ -11,9 +11,6 @@ import { getHeaders } from '../../lib/auth';
 //saveTeamsMembersimport { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
-import { Route } from 'react-router-dom';
-import XCloud from '../xcloud/XCloud';
-import { async } from 'async';
 import logo from '../../assets/drive-logo.svg';
 
 
@@ -47,9 +44,7 @@ interface State {
 class Teams extends React.Component<Props, State> {
 
     constructor(props: Props) {
-        super(props);
-
-        let renderOption = this.props.match.params.option 
+        super(props); 
 
         this.state = {
             user: {
@@ -68,7 +63,7 @@ class Teams extends React.Component<Props, State> {
             menuTitle: 'Create',
             visibility: '',
             showDescription: false,
-            templateOption: renderOption,
+            templateOption: this.props.match.params.option,
             template: () => { }
         }
 
@@ -125,12 +120,11 @@ class Teams extends React.Component<Props, State> {
         });
     }
 
+
     componentDidMount() {
         if (!this.isLoggedIn()) {
             history.push('/login');
         }
-
-        const user = JSON.parse(localStorage.xUser);
 
         switch (this.state.templateOption) {
             case 'settings':
@@ -139,32 +133,24 @@ class Teams extends React.Component<Props, State> {
             case 'password':
                 this.setState({ template: this.renderPassword.bind(this) })
                 break;
+            case 'plans':
+                this.setState({ template: this.renderPlans.bind(this) })
+                break;
             default:
                 this.setState({ template: this.renderPlans.bind(this) })
                 break;
         }
+        this.render();
     }
 
 
-    isBridgeUserActivated = async (bridgeUserEmail) => {
-        return await new Promise((resolve, reject) => {
-            console.log("BRIDGE USER", bridgeUserEmail); //debug                       
-
-            fetch(`/api/user/isactivated/${bridgeUserEmail}`, {
-                method: 'get',
-                headers: getHeaders(true, false)
-            }).then((responseTeam) => {
-                responseTeam.json().then((teamProps) => {
-                    console.log("TEAM PROPS", teamProps); //debug 
-                    resolve(teamProps);
-                }).catch((error) => {
-                    console.log('No team props', error);
-                })
-            }).catch((err) => { reject(err) })
-
-        });
+    componentDidUpdate(prevProps, prevState) {
+        if (prevProps.match.params.option !== this.props.match.params.option) {
+            this.setState({ 
+                template: this.renderPassword.bind(this),
+            })
+        }
     }
-
 
 
     sendEmailTeamsMember = (mail) => {
@@ -196,7 +182,6 @@ class Teams extends React.Component<Props, State> {
         e.preventDefault();
 
     }
-
 
 
     renderProductDescription = (): JSX.Element => {
@@ -293,42 +278,31 @@ class Teams extends React.Component<Props, State> {
 
     renderTeamSettings = (): JSX.Element => {
         return (<div>
-            <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} />
-            <Container className="login-main">
-                <Container className="login-container-box edit-password-box" style={{ minHeight: '430px', height: 'auto' }}>
-                    <div className="container-register">
-                        <p className="container-title edit-password" style={{ marginLeft: 0 }}>
-                            {this.state.menuTitle} your team
-                            </p>
+            <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={true} showSettingsButton={true} showFileButtons={false} />
 
-                        <Form className="form-register" onSubmit={this.sendInvitation}>
-                            <Form.Row>
-                                <Form.Group as={Col} controlId="teamName">
-                                    <Form.Control placeholder="Team's name" name="team-name" value={this.state.teamName} onChange={this.handleChangePass} readOnly={true} /><p>
-                                        Manage your team
-                            </p>
-                                </Form.Group>
-                            </Form.Row>
-                            <Form.Row>
-                                <Form.Group as={Col} controlId="invitedMember">
-                                    <div>
-                                        <input className="mail-box" type="email" required placeholder="example@example.com" value={this.state.email} onChange={this.handleEmailChange} />
-                                    </div>
-                                </Form.Group>
-                            </Form.Row>
+            <Container className="login-container-box management-container" style={{ minHeight: '350px', height: 'auto' }}>
+                <div className="container-register">
+                    <p className="container-title edit-password" style={{ marginLeft: 0 }}>
+                        Manage your team
+                    </p>
 
-                            <Form.Row className="form-register-submit">
-                                <Form.Group as={Col}>
-
-                                    <Button className="send-button" type="submit">Invite</Button>
-
-                                </Form.Group>
-                            </Form.Row>
-                        </Form>
-
+                    <Form className="form-register" onSubmit={this.sendInvitation}>
+                        <Form.Row>
+                            <Form.Group as={Col} controlId="invitedMember">
+                                <Form.Control placeholder="example@example.com" name="team-name" type="email" required value={this.state.email} onChange={this.handleEmailChange}/>
+                            </Form.Group>
+                            <Form.Group as={Col}>
+                                <Button className="on btn-block" type="submit">Invite</Button>
+                            </Form.Group>
+                        </Form.Row>
+                        <Form.Row className="form-register-submit">
+                            <Form.Group as={Col}>
+                                <Button className="on btn-block" type="submit">Invite</Button>
+                            </Form.Group>
+                        </Form.Row>
+                    </Form>
                     </div>
                 </Container>
-            </Container>
         </div>
         );
     }
@@ -337,7 +311,7 @@ class Teams extends React.Component<Props, State> {
     renderPassword = (): JSX.Element => {
         return (
             <div className="password">
-                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} />
+                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={true} showSettingsButton={true} showFileButtons={false} />
 
                 <Container className="login-container-box edit-password-box">
                     <div className="container-register">
@@ -364,7 +338,7 @@ class Teams extends React.Component<Props, State> {
     renderActivation = (): JSX.Element => {
         return (
             <div className="activation">
-                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} />
+                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={true} showSettingsButton={true} showFileButtons={false} />
 
                 <p className="logo"><img src={logo} alt="Logo" /></p>
                 <p className="container-title">Activation Team</p>

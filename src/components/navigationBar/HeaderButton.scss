@@ -7,4 +7,9 @@
   background-color: #f7f7f7;
   cursor: pointer;
   margin: 0 7px;
+  border: solid 0px;
+}
+
+.HeaderButton:disabled {
+  opacity: 0.5;
 }

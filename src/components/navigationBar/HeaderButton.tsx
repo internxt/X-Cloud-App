@@ -5,13 +5,14 @@ interface HeaderButtonProps {
     icon: string
     name: string
     clickHandler?: any
+    disabled?: boolean
 }
 
 const HeaderButton = (props: HeaderButtonProps) => {
     return (
-        <div className="HeaderButton" onClick={props.clickHandler}>
+        <button className="HeaderButton" onClick={props.clickHandler} disabled={props.disabled}>
             <img src={props.icon} alt={props.name} />
-        </div>
+        </button>
     )
 }
 
