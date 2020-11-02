@@ -122,6 +122,7 @@ class XCloud extends React.Component {
         console.log("ACCIONO GETFOLDERCONTENT CON ID: ", folder.id);
         this.getFolderContent(folder.id);
       }).catch((error) => {
+        console.log(error)
         reject(error);
       });
     });

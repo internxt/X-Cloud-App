@@ -13,6 +13,9 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import { analytics } from '../../lib/analytics';
+const AesUtil = require('./AesUtil');
+const openpgp = require('openpgp');
+ 
 
 interface LoginProps {
   email?: string
@@ -44,8 +47,9 @@ class Login extends React.Component<LoginProps> {
     // Check if recent login is passed and redirect user to Internxt Drive
     const mnemonic = localStorage.getItem('xMnemonic');
     const user = JSON.parse(localStorage.getItem('xUser') || '{}');
+    const xKeys = localStorage.getItem('xKeys');
 
-    if (user && mnemonic && this.props.handleKeySaved) {
+    if (user && mnemonic && xKeys && this.props.handleKeySaved) {
       this.props.handleKeySaved(user)
       history.push('/app')
     }
@@ -54,6 +58,8 @@ class Login extends React.Component<LoginProps> {
   componentDidUpdate() {
     if (this.state.isAuthenticated && this.state.token && this.state.user) {
       const mnemonic = localStorage.getItem('xMnemonic');
+      const xKeys = localStorage.getItem('xKeys');
+      
       if (mnemonic) {
         history.push('/app')
       }
@@ -118,7 +124,25 @@ class Login extends React.Component<LoginProps> {
     });
   }
 
-  doLogin = () => {
+  doLogin = async () => {
+
+    //Generate keys
+    const { privateKeyArmored, publicKeyArmored, revocationCertificate } = await openpgp.generateKey({
+      userIds: [{ email: 'inxt@inxt.com' }], // you can pass multiple user IDs
+      curve: 'ed25519',                                           // ECC curve name       // protects the private key
+    });
+
+    const encPrivateKey = AesUtil.encrypt(privateKeyArmored, this.state.password, false);
+    
+
+    console.log('CLAVE GENERADA privateKeyArmored del', privateKeyArmored);
+    console.log('CLAVE GENERADA privateKeyArmored', publicKeyArmored);
+    console.log('CLAVE GENERADA privateKeyArmored', revocationCertificate);
+
+    const codpublicKey = Buffer.from(publicKeyArmored).toString('base64');
+    const codrevocateKey = Buffer.from(revocationCertificate).toString('base64');
+    const decKrey = AesUtil.decrypt(encPrivateKey,this.state.password);
+  
     // Proceed with submit
     fetch("/api/login", {
       method: "post",
@@ -133,15 +157,17 @@ class Login extends React.Component<LoginProps> {
           const hashObj = passToHash({ password: this.state.password, salt });
           const encPass = encryptText(hashObj.hash);
 
-          
-
           fetch("/api/access", {
             method: "post",
             headers: getHeaders(true, false),
             body: JSON.stringify({
               email: this.state.email,
               password: encPass,
-              tfa: this.state.twoFactorCode
+              tfa: this.state.twoFactorCode,
+              publicKey:codpublicKey,
+              privateKey:encPrivateKey,
+              revocationKey:codrevocateKey,
+              privateKeyDec: decKrey
             })
           }).then(async res => {
             return { res, data: await res.json() };
@@ -161,9 +187,10 @@ class Login extends React.Component<LoginProps> {
               name: data.user.name,
               lastname: data.user.lastname,
               uuid: data.user.uuid,
-              credit: data.user.credit
-            };           
-            
+              credit: data.user.credit,
+              storeDecPrivateKey: decKrey
+            };
+
             if (this.props.handleKeySaved) {
               this.props.handleKeySaved(user)
             }
@@ -177,11 +204,16 @@ class Login extends React.Component<LoginProps> {
                 root_folder_id: data.userTeam.root_folder_id
               }
               localStorage.setItem('xTeam', JSON.stringify(team));
+            } else {
+              console.error('NO HAY TEAM')
             }
-            
+
             localStorage.setItem('xToken', data.token);
             localStorage.setItem('xMnemonic', user.mnemonic);
             localStorage.setItem('xUser', JSON.stringify(user));
+            localStorage.setItem('xKeys', decKrey);
+
+
 
             this.setState({
               isAuthenticated: true,

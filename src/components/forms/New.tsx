@@ -9,6 +9,10 @@ import { isMobile, isAndroid, isIOS } from 'react-device-detect'
 import { getHeaders } from '../../lib/auth'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { KeyPairSyncResult } from "crypto";
+const openpgp = require('openpgp');
+const AesUtil = require('./AesUtil');
+
 
 const bip39 = require('bip39')
 
@@ -61,6 +65,8 @@ class New extends React.Component<NewProps, NewState> {
         const xToken = localStorage.getItem('xToken');
         const mnemonic = localStorage.getItem('xMnemonic');
         const haveInfo = (xUser && xToken && mnemonic);
+      
+
 
         if (this.state.isAuthenticated === true || haveInfo) {
             history.push('/app')
@@ -119,7 +125,7 @@ class New extends React.Component<NewProps, NewState> {
     }
 
 
-    doRegister = () => {
+    doRegister = async () => {
         // Setup hash and salt 
         const hashObj = passToHash({ password: this.state.register.password });
         const encPass = encryptText(hashObj.hash);
@@ -128,6 +134,23 @@ class New extends React.Component<NewProps, NewState> {
         const mnemonic = bip39.generateMnemonic(256);
         const encMnemonic = encryptTextWithKey(mnemonic, this.state.register.password);
 
+        //Generate keys
+        const {privateKeyArmored, publicKeyArmored, revocationCertificate} = await openpgp.generateKey({
+            userIds: [{  email: 'inxt@inxt.com' }], // you can pass multiple user IDs
+            curve: 'ed25519',                                           // ECC curve name        // protects the private key
+        });
+        
+       const encPrivateKey = AesUtil.encrypt(privateKeyArmored,this.state.register.password,false);
+       const decKrey = AesUtil.decrypt(encPrivateKey,this.state.register.password);
+
+       console.log('CLAVE PRIVADA LENGTH', privateKeyArmored.length)
+       console.log('CLAVE PRIVADA ENCRIPTADA LENGTH', encPrivateKey.length)
+       console.log('CLAVE PRIVADA DESENCRIPTADA LENGTH', decKrey.length)
+       const codpublicKey = Buffer.from(publicKeyArmored).toString('base64');
+       const decpublicKey = Buffer.from(codpublicKey).toString();
+       const codrevocateKey = Buffer.from(revocationCertificate).toString('base64');
+  
+      
         fetch("/api/register", {
             method: "post",
             headers: getHeaders(true, true),
@@ -138,7 +161,10 @@ class New extends React.Component<NewProps, NewState> {
                 password: encPass,
                 mnemonic: encMnemonic,
                 salt: encSalt,
-                referral: this.readReferalCookie()
+                referral: this.readReferalCookie(),
+                privateKey: encPrivateKey,
+                publicKey: codpublicKey,
+                revocationKey: codrevocateKey
             })
         }).then(response => {
             if (response.status === 200) {
@@ -146,6 +172,7 @@ class New extends React.Component<NewProps, NewState> {
                     // Manage succesfull register
                     const { token, user } = body;
                     localStorage.setItem('xToken', token);
+                   
 
                     // Clear form fields
                     this.setState({

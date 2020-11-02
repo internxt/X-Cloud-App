@@ -22,6 +22,7 @@
     "jquery": "^3.4.1",
     "js-file-download": "^0.4.10",
     "natural-orderby": "^2.0.3",
+    "openpgp": "^4.10.8",
     "popper.js": "^1.16.1",
     "prettysize": "^2.0.0",
     "react": "^16.13.0",
@@ -62,8 +63,8 @@
     ]
   },
   "devDependencies": {
-    "@testing-library/dom": "^7.26.0",
     "@fortawesome/fontawesome-free": "^5.13.1",
+    "@testing-library/dom": "^7.26.0",
     "node-sass": "^4.13.1",
     "prop-types": "^15.7.2",
     "stylelint": "^13.4.0",

@@ -58,6 +58,7 @@ class Reset extends React.Component<ResetProps> {
 
         // Encrypt the mnemonic
         var encryptedMnemonic = encryptTextWithKey(localStorage.xMnemonic, this.state.newPassword);
+        var encryptedPrivateKey = encryptTextWithKey(localStorage.xKeys, this.state.newPassword);
 
         fetch('/api/user/password', {
             method: 'PATCH',
@@ -66,7 +67,8 @@ class Reset extends React.Component<ResetProps> {
                 currentPassword: encryptedCurrentPassword,
                 newPassword: encryptedNewPassword,
                 newSalt: encryptedNewSalt,
-                mnemonic: encryptedMnemonic
+                mnemonic: encryptedMnemonic,
+                privateKey: encryptedPrivateKey
             })
         })
             .then(async res => {
@@ -96,7 +98,8 @@ class Reset extends React.Component<ResetProps> {
         fetch("/api/login", {
             method: "post",
             headers: getHeaders(false, false),
-            body: JSON.stringify({ email: localStg.email })
+            body: JSON.stringify({ 
+                email: localStg.email })
         })
             .then(res => res.json())
             .then(res => {

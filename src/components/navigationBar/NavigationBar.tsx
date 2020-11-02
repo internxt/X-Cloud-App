@@ -248,10 +248,13 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
 
 
     handleTeamSection() {
-        const team = JSON.parse(localStorage.xTeam);
+        const team = JSON.parse(localStorage.xTeam || "{}");
         const user = JSON.parse(localStorage.xUser);
+
+        console.log(team)
+        console.log(user)
  
-        if (team.admin === user.email) {
+        if (team && team.admin === user.email) {
             history.push("/teams/password");
         } else {
             history.push("/teams");
@@ -297,7 +300,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                                 <Dropdown.Item onClick={(e) => { history.push('/settings'); }}>Settings</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => { history.push('/security'); }}>Security</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => { history.push('/invite'); }}>Referrals</Dropdown.Item>
-                                <Dropdown.Item onClick={(e) => { history.push('/teams/password'); }}>Teams</Dropdown.Item>
+                                <Dropdown.Item onClick={(e) => { history.push('/teams');; }}>Teams</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => {
                                     function getOperatingSystem() {
                                         let operatingSystem = 'Not known';
