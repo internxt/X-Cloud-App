@@ -61,12 +61,10 @@ class XCloud extends React.Component {
           // If user is signed in but is not activated set property isActivated to false
           const isActivated = data.activated;
           if (isActivated) {
-            if (!this.props.user.root_folder_id && data.activatedTeam) {
+            if (!this.props.user.root_folder_id) {
               // Initialize user in case that is not done yet
-              const llamar_a = this.state.isTeam ? this.teamInitialization : this.userInitialization
-              llamar_a()
-                .then((resultId) => {
-                  console.log("ROOT FOLDER CREADA CON ID:  ", resultId); //debug  
+              this.userInitialization()
+                .then((resultId) => { 
                 })
                 .catch((error) => {
                   const errorMsg = error ? error : '';
@@ -81,6 +79,13 @@ class XCloud extends React.Component {
             if (!data.activatedTeam) {
               // TODO: Push Team component with activation template.
             }
+         
+            const team = JSON.parse(localStorage.getItem("xTeam"));
+            if(!team) {
+              this.getTeamByUser().then((team) => {
+                localStorage.setItem('xTeam', JSON.stringify(team));
+              }).catch((err) => { });
+            }
 
             this.setState({ isActivated, isInitialized: true });
           }
@@ -93,12 +98,6 @@ class XCloud extends React.Component {
     }
   };
 
-  componentDidUpdate(prevProps) {
-    /*
-    if (this.props.isTeam !== prevProps.isTeam) {
-      this.setState({ isTeam: this.props.isTeam });
-    }*/
-  }
 
 
   teamInitialization = () => {
@@ -119,10 +118,8 @@ class XCloud extends React.Component {
           reject(null);
         }
       }).then(folder => {
-        console.log("ACCIONO GETFOLDERCONTENT CON ID: ", folder.id);
         this.getFolderContent(folder.id);
       }).catch((error) => {
-        console.log(error)
         reject(error);
       });
     });
@@ -184,6 +181,29 @@ class XCloud extends React.Component {
       });
   }
 
+  getTeamByUser = () => {
+    return new Promise((resolve, reject) => {
+      const user = JSON.parse(localStorage.getItem("xUser"));
+      fetch(`/api/teams-members/${user.email}`, {
+        method: 'get',
+        headers: getHeaders(true, false)
+      }).then((result) => {
+
+        if (result.status !== 200) { return; }
+        return result.json()
+      }).then(result => {
+        if (result.admin === user.email) {
+          result.rol = 'admin';
+        } else {
+          result.rol = 'member';
+        }
+        resolve(result);
+      }).catch(err => {
+        reject(err);
+      });
+    });
+  }
+
   setSortFunction = (newSortFunc) => {
     // Set new sort function on state and call getFolderContent for refresh files list
     this.setState({ sortFunction: newSortFunc });
@@ -212,7 +232,7 @@ class XCloud extends React.Component {
         body: JSON.stringify({
           parentFolderId: this.state.currentFolderId,
           folderName,
-          teamId:  _.last(this.state.namePath) && _.last(this.state.namePath).hasOwnProperty('id_team') ? _.last(this.state.namePath).id_team : null
+          teamId: _.last(this.state.namePath) && _.last(this.state.namePath).hasOwnProperty('id_team') ? _.last(this.state.namePath).id_team : null
         }),
       })
         .then(async (res) => {
@@ -416,7 +436,6 @@ class XCloud extends React.Component {
         }
       });
   };
-
   updateMeta = (metadata, itemId, isFolder) => {
     // Apply changes on metadata depending on type of item
     const data = JSON.stringify({ metadata });
@@ -880,7 +899,7 @@ class XCloud extends React.Component {
       } else {
         console.log("CARGO TEAM WORKSPACE") // debug
         this.getFolderContent(team.root_folder_id);
-        this.setState({ 
+        this.setState({
           currentFolderId: team.root_folder_id,
           isTeam: true,
           namePath: []
@@ -890,7 +909,7 @@ class XCloud extends React.Component {
       const user = JSON.parse(localStorage.getItem("xUser"));
       !user.root_folder_id ? this.userInitialization() : this.getFolderContent(user.root_folder_id);
       console.log("CARGO WORKSPACE PERSONAL") // debug    
-      this.setState({ 
+      this.setState({
         currentFolderId: user.root_folder_id,
         isTeam: false,
         namePath: []

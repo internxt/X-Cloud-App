@@ -145,28 +145,6 @@ class Teams extends React.Component<Props, State> {
         }
     }
 
-
-    isBridgeUserActivated = async (bridgeUserEmail) => {
-        return await new Promise((resolve, reject) => {
-            console.log("BRIDGE USER", bridgeUserEmail); //debug                       
-
-            fetch(`/api/user/isactivated/${bridgeUserEmail}`, {
-                method: 'get',
-                headers: getHeaders(true, false)
-            }).then((responseTeam) => {
-                responseTeam.json().then((teamProps) => {
-                    console.log("TEAM PROPS", teamProps); //debug 
-                    resolve(teamProps);
-                }).catch((error) => {
-                    console.log('No team props', error);
-                })
-            }).catch((err) => { reject(err) })
-
-        });
-    }
-
-
-
     sendEmailTeamsMember = (mail) => {
         fetch('/api/team-invitations', {
             method: 'POST',

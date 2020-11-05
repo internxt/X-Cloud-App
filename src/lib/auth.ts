@@ -1,4 +1,4 @@
-function getHeaders(withAuth: Boolean, withMnemonic: Boolean, withKey: Boolean = false, isTeam: Boolean = false): Headers {
+function getHeaders(withAuth: Boolean, withMnemonic: Boolean, isTeam: Boolean = false): Headers {
     const headers = new Headers()
 
     headers.append('content-type', 'application/json; charset=utf-8')
@@ -21,11 +21,7 @@ function getHeaders(withAuth: Boolean, withMnemonic: Boolean, withKey: Boolean =
         if (withMnemonic) {
             headers.append('internxt-mnemonic', `${localStorage.getItem("xMnemonic")}`)
         }
-
-        if (withKey) {
-            headers.append('private-key', `${localStorage.getItem("xKeys")}`)
         }
-    }
 
     return headers;
 }
