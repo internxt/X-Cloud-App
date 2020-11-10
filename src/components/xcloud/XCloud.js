@@ -379,6 +379,7 @@ class XCloud extends React.Component {
             userId: getUuid(),
             file_id: itemId,
             email: getUserData().email,
+            date: new Date().toISOString(),
             platform: 'web'
           })
           this.getFolderContent(this.state.currentFolderId);
@@ -491,6 +492,7 @@ class XCloud extends React.Component {
         file_type: pcb.props.type,
         email: getUserData().email,
         folder_id: pcb.props.rawItem.folder_id,
+        date: new Date().toISOString(),
         platform: 'web'
       })
       axios.get(`/api/storage/file/${id}`, {
@@ -569,13 +571,13 @@ class XCloud extends React.Component {
         return reject(Error('No folder ID provided'));
       }
 
-      // console.log(file)
       analytics.track('file-upload-start', {
         userId: getUuid(),
         file_size: file.size,
         file_type: file.type,
         folder_id: parentFolderId,
         email: getUserData().email,
+        date: new Date().toISOString(),
         platform: 'web'
       })
       const uploadUrl = `/api/storage/folder/${parentFolderId}/upload`;
@@ -613,9 +615,12 @@ class XCloud extends React.Component {
             analytics.track('file-upload-finished', {
               userId: getUuid(),
               platform: 'web',
-              file_size: file.size,
+              size: file.size,
               file_type: file.type,
-              email: getUserData().email
+              file_name: file.name,
+              file_id: file.id,
+              email: getUserData().email,
+              date: (new Date()).toISOString()
             })
             return { res: res, data: data };
           } else {
