@@ -182,7 +182,6 @@ class StoragePlans extends React.Component {
                                 header={'€' + fixedPrice}
                                 onClick={(e) => {
                                     analytics.track('plan-subscription-selected', {
-                                        price: fixedPrice,
                                         plan_type: entry.name,
                                         payment_type: PaymentBridges[0].name,
                                         plan_length: entry.interval_count,
