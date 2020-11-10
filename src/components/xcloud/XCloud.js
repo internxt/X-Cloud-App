@@ -83,7 +83,8 @@ class XCloud extends React.Component {
             const team = JSON.parse(localStorage.getItem("xTeam"));
             if(!team) {
               this.getTeamByUser().then((team) => {
-                localStorage.setItem('xTeam', JSON.stringify(team));
+                localStorage.clear();
+                history.push('/login')
               }).catch((err) => { });
             }
 
@@ -163,9 +164,8 @@ class XCloud extends React.Component {
     return fetch('/api/user/isactivated', {
       method: 'get',
       headers: getHeaders(true, false),
-    })
-      .then((response) => response.json())
-      .catch((error) => {
+    }).then((response) => response.json()
+    ).catch((error) => {
         console.log('Error getting user activation');
       });
   };
@@ -189,7 +189,7 @@ class XCloud extends React.Component {
         method: 'get',
         headers: getHeaders(true, false)
       }).then((result) => {
-        if (result.status !== 200) { console.log(result.body); return; }
+        if (result.status !== 200) {  return; }
         return result.json()
       }).then(result => {
         if (result.admin === user.email) {
@@ -235,8 +235,7 @@ class XCloud extends React.Component {
           folderName,
           teamId: _.last(this.state.namePath) && _.last(this.state.namePath).hasOwnProperty('id_team') ? _.last(this.state.namePath).id_team : null
         }),
-      })
-        .then(async (res) => {
+      }).then(async (res) => {
           if (res.status !== 201) {
             const body = await res.json();
             throw body.error ? body.error : 'createFolder error';
@@ -246,8 +245,7 @@ class XCloud extends React.Component {
             event: 'folder-created'
           })
           this.getFolderContent(this.state.currentFolderId, false);
-        })
-        .catch((err) => {
+        }).catch((err) => {
           if (err.includes('already exists')) {
             toast.warn('Folder with same name already exists');
           } else {
