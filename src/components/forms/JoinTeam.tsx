@@ -9,6 +9,7 @@ import './Reset.scss';
 import { Form, Col, Button } from 'react-bootstrap';
 import NavigationBar from './../navigationBar/NavigationBar';
 import { encryptText, decryptTextWithKey, decryptText, passToHash } from '../../lib/utils';
+import { getTeamMembersByUser } from '../../services/TeamMemberService';
 
 interface Props {
   match: any
@@ -17,8 +18,8 @@ interface Props {
 interface State {
   isTeamActivated: Boolean | null
   isTeamError: Boolean
-  member: string,
-  teamPassword: string
+  member?: string,
+  teamPassword?: string
 }
 
 class JoinTeam extends React.Component<Props, State> {
@@ -43,7 +44,11 @@ class JoinTeam extends React.Component<Props, State> {
 
     fetch(`/api/teams/join/${token}`, {
       method: 'post',
-      headers: getHeaders(false, false)
+      headers: getHeaders(false, false),
+      body: JSON.stringify({
+        member:  this.state.member,
+        teamPassword: this.state.teamPassword
+      })
     }).then(response => {
       if (response.status === 200) {
         this.setState({ isTeamActivated: true });

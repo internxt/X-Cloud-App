@@ -106,8 +106,8 @@ class XCloud extends React.Component {
         method: 'post',
         headers: getHeaders(true, true, true),
         body: JSON.stringify({
-          email: JSON.parse(localStorage.getItem("xTeam") || "{}").user,
-          mnemonic: JSON.parse(localStorage.getItem("xTeam") || "{}").mnemonic
+          email: JSON.parse(localStorage.getItem("xTeam") || "{}").bridge_user,
+          mnemonic: JSON.parse(localStorage.getItem("xTeam") || "{}").bridge_mnemonic
         }),
       }).then((response) => {
         if (response.status === 200) {
@@ -120,6 +120,7 @@ class XCloud extends React.Component {
       }).then(folder => {
         this.getFolderContent(folder.id);
       }).catch((error) => {
+        console.log(error)
         reject(error);
       });
     });
@@ -188,8 +189,7 @@ class XCloud extends React.Component {
         method: 'get',
         headers: getHeaders(true, false)
       }).then((result) => {
-
-        if (result.status !== 200) { return; }
+        if (result.status !== 200) { console.log(result.body); return; }
         return result.json()
       }).then(result => {
         if (result.admin === user.email) {
@@ -199,6 +199,7 @@ class XCloud extends React.Component {
         }
         resolve(result);
       }).catch(err => {
+        console.log(err)
         reject(err);
       });
     });

@@ -9,7 +9,10 @@ import iconInxt from '../assets/PaymentBridges/inxt.svg'
 import iconPayPal from '../assets/PaymentBridges/paypal.svg'
 
 import { getHeaders } from '../lib/auth'
-
+import { isReturnStatement } from 'typescript';
+const bip39 = require('bip39')
+const openpgp = require('openpgp');
+const AesUtil = require('./AesUtil');
 const STRIPE_DEBUG = true;
 
 const stripeGlobal = window.Stripe;
@@ -49,7 +52,8 @@ class TeamsPlans extends React.Component {
             selectedProductToBuy: null,
             selectedPlanToBuy: null,
 
-            paymentMethod: null
+            paymentMethod: null,
+
         }
     }
 
@@ -85,11 +89,26 @@ class TeamsPlans extends React.Component {
     }
 
 
-    handleStripePayment() {
+    handleStripePayment = async () => {
+        
         this.setState({ statusMessage: 'Purchasing...' });
+        const mnemonicTeam = bip39.generateMnemonic(256);
+        const publicKeyArmored = Buffer.from(localStorage.xKeyPublic, 'base64').toString()
+        
+        const encMnemonicTeam = await openpgp.encrypt({
+            message: openpgp.message.fromText(mnemonicTeam),                 // input as Message object
+            publicKeys: ((await openpgp.key.readArmored(publicKeyArmored)).keys),// for encryption
+           
+        });
+        console.log(publicKeyArmored)
+        console.log(encMnemonicTeam)
+        const codmnemonicTeam = Buffer.from(encMnemonicTeam.data).toString('base64');
 
         const stripe = new stripeGlobal(STRIPE_DEBUG ? process.env.REACT_APP_STRIPE_TEST_PK : process.env.REACT_APP_STRIPE_PK);
-        const body = { plan: this.state.selectedPlanToBuy.id, sessionType: 'team', product: this.state.selectedProductToBuy.id };
+
+        const body = { plan: this.state.selectedPlanToBuy.id, sessionType: 'team', product: this.state.selectedProductToBuy.id, mnemonicTeam: codmnemonicTeam};
+
+        console.log(codmnemonicTeam.length)
 
         if (/^pk_test_/.exec(stripe._apiKey)) { body.test = true }
 
@@ -118,7 +137,7 @@ class TeamsPlans extends React.Component {
     render() {
         if (this.state.storageStep === 1) {
             return (<div>
-                <div style={{display: 'flex', justifyContent: 'space-between'}}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <p className="title1">Team Plans</p>
                     <span
                         onMouseOver={() => {
@@ -129,7 +148,7 @@ class TeamsPlans extends React.Component {
                         }}
                     ><i className="fas fa-info-circle"></i></span>
                 </div>
-                
+
 
                 {this.state.productsLoading === true ? <div style={{ textAlign: 'center' }}>
                     <Spinner animation="border" size="sm" />
@@ -149,13 +168,13 @@ class TeamsPlans extends React.Component {
                                     this.setState({ selectedProductToBuy: entry, storageStep: 2, plansLoading: true, availablePlans: null });
                                 }}
                                 handleShowDescription={this.props.handleShowDescription}
-                                text={entry.metadata.price_eur === '0.00' ? 
-                                    'Free' : 
-                                        <span>
-                                            <span style={{display: 'block'}}>{entry.metadata.team_members !== 'unlimited' ? `Up to ${entry.metadata.team_members} members` : 'Unlimited'}</span>
-                                            <span style={{display: 'block'}}>€{entry.metadata.price_eur}<span style={{ color: '#7e848c', fontWeight: 'normal' }}>/month</span></span>
-                                        </span>
-                                    } />
+                                text={entry.metadata.price_eur === '0.00' ?
+                                    'Free' :
+                                    <span>
+                                        <span style={{ display: 'block' }}>{entry.metadata.team_members !== 'unlimited' ? `Up to ${entry.metadata.team_members} members` : 'Unlimited'}</span>
+                                        <span style={{ display: 'block' }}>€{entry.metadata.price_eur}<span style={{ color: '#7e848c', fontWeight: 'normal' }}>/month</span></span>
+                                    </span>
+                                } />
                         })
                         : ''}
                 </Row>

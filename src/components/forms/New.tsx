@@ -141,14 +141,11 @@ class New extends React.Component<NewProps, NewState> {
         });
         
        const encPrivateKey = AesUtil.encrypt(privateKeyArmored,this.state.register.password,false);
-       const decKrey = AesUtil.decrypt(encPrivateKey,this.state.register.password);
+       const decKey = AesUtil.decrypt(encPrivateKey,this.state.register.password);
 
-       console.log('CLAVE PRIVADA LENGTH', privateKeyArmored.length)
-       console.log('CLAVE PRIVADA ENCRIPTADA LENGTH', encPrivateKey.length)
-       console.log('CLAVE PRIVADA DESENCRIPTADA LENGTH', decKrey.length)
-       const codpublicKey = Buffer.from(publicKeyArmored).toString('base64');
-       const decpublicKey = Buffer.from(codpublicKey).toString();
-       const codrevocateKey = Buffer.from(revocationCertificate).toString('base64');
+       
+       const codpublicKey = Buffer.from(publicKeyArmored).toString('base64');;
+       const codrevocationKey = Buffer.from(revocationCertificate).toString('base64');
   
       
         fetch("/api/register", {
@@ -164,7 +161,7 @@ class New extends React.Component<NewProps, NewState> {
                 referral: this.readReferalCookie(),
                 privateKey: encPrivateKey,
                 publicKey: codpublicKey,
-                revocationKey: codrevocateKey
+                revocationKey: codrevocationKey
             })
         }).then(response => {
             if (response.status === 200) {
@@ -172,7 +169,7 @@ class New extends React.Component<NewProps, NewState> {
                     // Manage succesfull register
                     const { token, user } = body;
                     localStorage.setItem('xToken', token);
-                   
+                    
 
                     // Clear form fields
                     this.setState({
