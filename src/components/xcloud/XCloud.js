@@ -64,7 +64,7 @@ class XCloud extends React.Component {
             if (!this.props.user.root_folder_id) {
               // Initialize user in case that is not done yet
               this.userInitialization()
-                .then((resultId) => { 
+                .then((resultId) => {
                 })
                 .catch((error) => {
                   const errorMsg = error ? error : '';
@@ -73,15 +73,15 @@ class XCloud extends React.Component {
                 });
             } else if (this.props.user.root_folder_id) {
               this.getFolderContent(this.props.user.root_folder_id);
-              this.setState({ currentFolderId: this.props.user.root_folder_id});
+              this.setState({ currentFolderId: this.props.user.root_folder_id });
             }
 
             if (!data.activatedTeam) {
               // TODO: Push Team component with activation template.
             }
-         
+
             const team = JSON.parse(localStorage.getItem("xTeam"));
-            if(!team) {
+            if (!team) {
               this.getTeamByUser().then((team) => {
                 localStorage.clear();
                 history.push('/login')
@@ -107,19 +107,34 @@ class XCloud extends React.Component {
         method: 'post',
         headers: getHeaders(true, true, true),
         body: JSON.stringify({
-          email: JSON.parse(localStorage.getItem("xTeam") || "{}").bridge_user,
-          mnemonic: JSON.parse(localStorage.getItem("xTeam") || "{}").bridge_mnemonic
+          email: JSON.parse(localStorage.getItem("xTeam") || "{}").user,
+          mnemonic: JSON.parse(localStorage.getItem("xTeam") || "{}").mnemonic
         }),
       }).then((response) => {
         if (response.status === 200) {
-          response.json().then((body) => {
+          response.json().then((body) => { 
+            const xteam = localStorage.getItem("xTeam");
+            console.log(xteam)
+            const xTeamJson = JSON.parse(xteam);
+            xTeamJson.root_folder_id = body.userData.root_folder_id;
+            localStorage.setItem('xTeam', JSON.stringify(xTeamJson));
+            console.log(xTeamJson)
+            
+           
+          
+          
+            
+            //const root = body.userData.root_folder_id;
+            //xteam.root_folder_id = root; 
+            //localStorage.setItem('xTeam', JSON.stringify(xteam))
             resolve(body);
           });
         } else {
           reject(null);
         }
-      }).then(folder => {
-        this.getFolderContent(folder.id);
+      }).then(Folder => {
+      
+      
       }).catch((error) => {
         console.log(error)
         reject(error);
@@ -166,8 +181,8 @@ class XCloud extends React.Component {
       headers: getHeaders(true, false),
     }).then((response) => response.json()
     ).catch((error) => {
-        console.log('Error getting user activation');
-      });
+      console.log('Error getting user activation');
+    });
   };
 
   isTeamActivated = () => {
@@ -175,8 +190,7 @@ class XCloud extends React.Component {
     return fetch(`/api/team/isactivated/${team.bridge_user}`, {
       method: 'get',
       headers: getHeaders(true, false),
-    })
-      .then((response) => response.json())
+    }).then((response) => response.json())
       .catch((error) => {
         console.log('Error getting user activation');
       });
@@ -189,7 +203,7 @@ class XCloud extends React.Component {
         method: 'get',
         headers: getHeaders(true, false)
       }).then((result) => {
-        if (result.status !== 200) {  return; }
+        if (result.status !== 200) { return; }
         return result.json()
       }).then(result => {
         if (result.admin === user.email) {
@@ -236,22 +250,22 @@ class XCloud extends React.Component {
           teamId: _.last(this.state.namePath) && _.last(this.state.namePath).hasOwnProperty('id_team') ? _.last(this.state.namePath).id_team : null
         }),
       }).then(async (res) => {
-          if (res.status !== 201) {
-            const body = await res.json();
-            throw body.error ? body.error : 'createFolder error';
-          }
-          analytics.track({
-            userId: getUuid(),
-            event: 'folder-created'
-          })
-          this.getFolderContent(this.state.currentFolderId, false);
-        }).catch((err) => {
-          if (err.includes('already exists')) {
-            toast.warn('Folder with same name already exists');
-          } else {
-            toast.warn(`"${err}"`);
-          }
-        });
+        if (res.status !== 201) {
+          const body = await res.json();
+          throw body.error ? body.error : 'createFolder error';
+        }
+        analytics.track({
+          userId: getUuid(),
+          event: 'folder-created'
+        })
+        this.getFolderContent(this.state.currentFolderId, false);
+      }).catch((err) => {
+        if (err.includes('already exists')) {
+          toast.warn('Folder with same name already exists');
+        } else {
+          toast.warn(`"${err}"`);
+        }
+      });
     } else {
       toast.warn('Invalid folder name');
     }
@@ -889,12 +903,13 @@ class XCloud extends React.Component {
   handleChangeWorkspace = (event) => {
     if (event) {
       const team = JSON.parse(localStorage.getItem("xTeam"));
-      console.log("EQUIPO: ", team); // debug
+
       if (!team) {
         history.push("/teams");
       } else if (team && !team.root_folder_id) {
-        console.log("NO EXISTE ROOT FOLDER") // debug
+        console.log("NO EXISTE ROOT FOLDER")    // debug
         this.teamInitialization();
+
       } else {
         console.log("CARGO TEAM WORKSPACE") // debug
         this.getFolderContent(team.root_folder_id);

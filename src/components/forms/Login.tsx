@@ -162,9 +162,6 @@ class Login extends React.Component<LoginProps> {
           const privkeyDecrypted = AesUtil.decrypt(privateKey, this.state.password)
 
 
-          console.log('CLAVE PUBLICA LOGIN', publicKey)
-          console.log('CLAVE PRIVATE LOGIN', privkeyDecrypted)
-          console.log('CLAVE REVOCATE LOGIN', revocationKey)
 
           localStorage.setItem('xKeys', privkeyDecrypted);
           localStorage.setItem('xKeyPublic', publicKey);
@@ -208,6 +205,10 @@ class Login extends React.Component<LoginProps> {
 
             };
 
+            localStorage.setItem('xToken', data.token);
+            localStorage.setItem('xMnemonic', user.mnemonic);
+            localStorage.setItem('xUser', JSON.stringify(user));
+            
 
             if (this.props.handleKeySaved) {
               this.props.handleKeySaved(user)
@@ -246,9 +247,7 @@ class Login extends React.Component<LoginProps> {
             } else {
               console.error('NO HAY TEAM')
             }
-            localStorage.setItem('xToken', data.token);
-            localStorage.setItem('xMnemonic', user.mnemonic);
-            localStorage.setItem('xUser', JSON.stringify(user));
+            
 
             this.setState({
               isAuthenticated: true,
