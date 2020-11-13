@@ -15,6 +15,7 @@ import { Route } from 'react-router-dom';
 import XCloud from '../xcloud/XCloud';
 import { async } from 'async';
 import logo from '../../assets/drive-logo.svg';
+const openpgp = require('openpgp');
 
 
 interface Props {
@@ -49,7 +50,7 @@ class Teams extends React.Component<Props, State> {
     constructor(props: Props) {
         super(props);
 
-        let renderOption = this.props.match.params.option 
+        let renderOption = this.props.match.params.option
 
         this.state = {
             user: {
@@ -145,22 +146,68 @@ class Teams extends React.Component<Props, State> {
         }
     }
 
-    sendEmailTeamsMember = (mail) => {
-        fetch('/api/team-invitations', {
-            method: 'POST',
+    sendEmailTeamsMember = async (mail) => {
+        await fetch(`/api/user/keys/${mail}`, {
+            method: 'GET',
             headers: getHeaders(true, false),
-            body: JSON.stringify({ email: mail })
-        }).then(async res => {
-            return { response: res, data: await res.json() };
-        }).then(res => {
-            if (res.response.status !== 200) {
-                throw res.data;
-            } else {
-                toast.info(`Invitation email sent to ${mail}`);
-            }
-        }).catch(err => {
-            toast.warn(`Error: ${err.error ? err.error : 'Internal Server Error'}`);
+        }).then((response) => {
+            response.json().then(async (rp) => {
+                //Datas
+                console.log('RESPUESTA CLAVE PUBLICA PETICION',rp.publicKey)
+                const bridgePass = JSON.parse(localStorage.getItem("xTeam") || "{}").password;
+                const mnemonicTeam = JSON.parse(localStorage.getItem("xTeam") || "{}").mnemonic;
+                console.log(mnemonicTeam)
+                const publicKeyArmored = Buffer.from(rp.publicKey, 'base64').toString()
+                console.log('ARMORED PUBLIC KEY',publicKeyArmored)
+                
+                //Encrypt
+                const EncryptBridgePass = await openpgp.encrypt({
+                    message: openpgp.message.fromText(bridgePass),                 
+                    publicKeys: ((await openpgp.key.readArmored(publicKeyArmored)).keys),   
+                });
+                console.log('BRIDGE PASS ENCRIPTADO',EncryptBridgePass.data)
+
+                const EncryptMnemonicTeam = await openpgp.encrypt({
+                    message: openpgp.message.fromText(mnemonicTeam),                 
+                    publicKeys: ((await openpgp.key.readArmored(publicKeyArmored)).keys), 
+                      
+                });
+                console.log('MNEMONIC ENCRIPTADO',EncryptMnemonicTeam.data)
+
+                const base64bridge_password = Buffer.from(EncryptBridgePass.data).toString('base64')
+                const base64Mnemonic = Buffer.from(EncryptMnemonicTeam.data).toString('base64')
+
+                console.log('MNEMONIC EN BASE 64', base64Mnemonic)
+             
+                await fetch('/api/team-invitations', {
+                    method: 'POST',
+                    headers: getHeaders(true, false, true),
+                    body: JSON.stringify({
+                        email: mail,
+                        bridgePass: base64bridge_password,
+                        mnemonicTeam: base64Mnemonic,
+                    })
+                }).then(async res => {
+                    return { response: res, data: await res.json() };
+                }).then(res => {
+                    if (res.response.status !== 200) {
+                        throw res.data;
+                    } else {
+                        toast.info(`Invitation email sent to ${mail}`);
+                    }
+                }).catch(err => {
+                    toast.warn(`Error: ${err.error ? err.error : 'Internal Server Error'}`);
+                });
+
+            }).catch((error) => {
+                console.log('Error RP', error);
+            });
+        }).catch((error) => {
+            console.log('Error getting pubKey', error);
         });
+
+      
+
     }
 
 
@@ -358,7 +405,7 @@ class Teams extends React.Component<Props, State> {
     render() {
         return (
             <div>
-                {this.state.template()}
+                {this.renderPlans()}
             </div>
         );
     }

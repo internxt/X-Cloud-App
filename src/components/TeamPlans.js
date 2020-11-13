@@ -93,7 +93,7 @@ class TeamsPlans extends React.Component {
         
         this.setState({ statusMessage: 'Purchasing...' });
         const mnemonicTeam = bip39.generateMnemonic(256);
-        const publicKeyArmored = Buffer.from(localStorage.xKeyPublic, 'base64').toString()
+        const publicKeyArmored = localStorage.xKeyPublic;
         
         const encMnemonicTeam = await openpgp.encrypt({
             message: openpgp.message.fromText(mnemonicTeam),                 // input as Message object

@@ -153,19 +153,11 @@ class Login extends React.Component<LoginProps> {
         // Manage credentials verification
         response.json().then((body) => {
           // Check password
-          const publicKey = body.pbKey;
-          const privateKey = body.pvKey;
-          const revocationKey = body.revKey;
+          console.log(body)
+
           const salt = decryptText(body.sKey);
           const hashObj = passToHash({ password: this.state.password, salt });
           const encPass = encryptText(hashObj.hash);
-          const privkeyDecrypted = AesUtil.decrypt(privateKey, this.state.password)
-
-
-
-          localStorage.setItem('xKeys', privkeyDecrypted);
-          localStorage.setItem('xKeyPublic', publicKey);
-
 
           fetch("/api/access", {
             method: "post",
@@ -174,18 +166,30 @@ class Login extends React.Component<LoginProps> {
               email: this.state.email,
               password: encPass,
               tfa: this.state.twoFactorCode,
-              publicKey: publicKey,
-              privateKey: privateKey,
-              revocationKey: revocationKey,
+              publicKey: body.pbKey,
+              privateKey: body.pvKey,
+              revocationKey: body.revKey,
               //privateKeyDec: privateKey
             })
           }).then(async res => {
             return { res, data: await res.json() };
           }).then(async res => {
+            const publicKey = body.pbKey;
+            const privateKey = body.pvKey;
+            const revocationKey = body.revKey;
+            const privkeyDecrypted = AesUtil.decrypt(privateKey, this.state.password)
+
+            const ArmoredPublicKey = Buffer.from(publicKey, 'base64').toString()
+            const ArmoredRevocateKey = Buffer.from(revocationKey, 'base64').toString()
+
+            localStorage.setItem('xKeys', privkeyDecrypted);
+            localStorage.setItem('xKeyPublic', ArmoredPublicKey);
+
             console.log("ACCESS RESPONSE: ", res.data); //debug
             if (res.res.status !== 200) {
               throw new Error(res.data.error ? res.data.error : res.data);
             }
+            
 
             var data = res.data;
             // Manage succesfull login
@@ -199,37 +203,43 @@ class Login extends React.Component<LoginProps> {
               lastname: data.user.lastname,
               uuid: data.user.uuid,
               credit: data.user.credit,
-              privateKey: privateKey,
-              publicKey: publicKey,
-              revocationKey: revocationKey
+              privateKey: privkeyDecrypted,
+              publicKey: ArmoredPublicKey,
+              revocationKey: ArmoredRevocateKey
 
             };
 
             localStorage.setItem('xToken', data.token);
             localStorage.setItem('xMnemonic', user.mnemonic);
             localStorage.setItem('xUser', JSON.stringify(user));
-            
+
 
             if (this.props.handleKeySaved) {
               this.props.handleKeySaved(user)
             }
-            
+
             if (data.userTeam && data.userTeam.isActivated) {
               console.log('entro')
-              const pubKeys = localStorage.xKeyPublic;
-              const mnemonicDecode = Buffer.from(data.userTeam.bridge_mnemonic, 'base64').toString()
-              const base64PublicKey = Buffer.from(pubKeys, 'base64').toString()
-
-              const pvKeys = localStorage.xKeys;
-              const privateKeys = (await openpgp.key.readArmored(pvKeys)).keys;
-
+              console.log(data.userTeam)
               
+              
+              const StoragepubKey = localStorage.xKeyPublic;
+              const mnemonicDecode = Buffer.from(data.userTeam.bridge_mnemonic, 'base64').toString()
+              console.log(data.userTeam)
+              console.log('MNEMONIC DECODIFICADO',mnemonicDecode);
+              console.log('STORAGE PUB KEY', StoragepubKey);
+              console.log(data.userTeam.bridge_mnemonic)
+              
+              const privKey = localStorage.xKeys;
+              const privateKeys = (await openpgp.key.readArmored(privKey)).keys;
+              console.log('PRIV KEYS', privKey)
+              console.log('ARMORED LEIDO', privateKeys)
+            
               const mnemonicDecrypt = await openpgp.decrypt({
                 message: await openpgp.message.readArmored(mnemonicDecode),              // parse armored message
-                publicKeys: (await openpgp.key.readArmored(base64PublicKey)).keys, // for verification (optional)
+                publicKeys: (await openpgp.key.readArmored(StoragepubKey)).keys, // for verification (optional)
                 privateKeys: privateKeys                               // for decryption
               });
-              
 
               const team = {
                 user: data.userTeam.bridge_user,
@@ -239,15 +249,12 @@ class Login extends React.Component<LoginProps> {
                 root_folder_id: data.userTeam.root_folder_id
               }
               localStorage.setItem('xTeam', JSON.stringify(team));
-              console.log('mnemonic decodificado', mnemonicDecode)
-              console.log('MNEMONIC DESENCRIPTAD', mnemonicDecrypt)
-              
-              //console.log('mnemonic desencriptado', mnemonicDecrypt.data)
+
 
             } else {
               console.error('NO HAY TEAM')
             }
-            
+
 
             this.setState({
               isAuthenticated: true,
