@@ -165,18 +165,17 @@ class Login extends React.Component<LoginProps> {
             body: JSON.stringify({
               email: this.state.email,
               password: encPass,
-              tfa: this.state.twoFactorCode,
-              publicKey: body.pbKey,
-              privateKey: body.pvKey,
-              revocationKey: body.revKey,
+              tfa: this.state.twoFactorCode
               //privateKeyDec: privateKey
             })
           }).then(async res => {
             return { res, data: await res.json() };
           }).then(async res => {
-            const publicKey = body.pbKey;
-            const privateKey = body.pvKey;
-            const revocationKey = body.revKey;
+            console.log(res.data.user)
+        
+            const publicKey = res.data.user.publicKey;
+            const privateKey = res.data.user.privateKey;
+            const revocationKey = res.data.user.revocationKey;
             const privkeyDecrypted = AesUtil.decrypt(privateKey, this.state.password)
 
             const ArmoredPublicKey = Buffer.from(publicKey, 'base64').toString()
@@ -215,7 +214,7 @@ class Login extends React.Component<LoginProps> {
 
 
             if (this.props.handleKeySaved) {
-              this.props.handleKeySaved(user)
+              //this.props.handleKeySaved(user)
             }
 
             if (data.userTeam && data.userTeam.isActivated) {
