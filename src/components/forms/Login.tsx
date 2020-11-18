@@ -219,7 +219,6 @@ class Login extends React.Component<LoginProps> {
             }
 
             if (data.userTeam && data.userTeam.isActivated) {
-              console.log('entro')
               console.log(data.userTeam)
               
               
@@ -249,6 +248,7 @@ class Login extends React.Component<LoginProps> {
                 root_folder_id: data.userTeam.root_folder_id
               }
               localStorage.setItem('xTeam', JSON.stringify(team));
+              localStorage.setItem('xTokenTeam', data.tokenTeam);
 
 
             } else {

@@ -100,6 +100,32 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         return "Unknown"
     }
 
+    getTeamUsage() {
+        this.setState({ workspace: 'Team Workspace' })
+        const isTeam = true;
+
+        fetch(`/api/limit/${isTeam}`, {
+            method: 'get',
+            headers: getHeaders(true, false)
+        }).then(res => {
+            return res.json();
+        }).then(res1 => {
+            fetch(`/api/usage/${isTeam}`, {
+                method: 'get',
+                headers: getHeaders(true, false)
+            }).then(res3 => {
+                return res3.json();
+            }).then(res4 => {
+                this.setState({ team: { ...this.state.team, maxSpaceBytes: res1.maxSpaceBytes } });
+                this.setState({ team: { ...this.state.team, usedSpace: res4.usedSpace } });
+            }).catch(err => {
+                console.log('Error on fetch /api/usage', err);
+            });
+        }).catch(err => {
+            console.log('Error on fetch /api/limit', err);
+        });
+    }
+
     componentDidMount() {
         let user = null;
         try {
@@ -110,32 +136,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
 
             if (this.state.isTeam) {
                 this.setState({ workspace: 'Team Workspace' })
-                const idTeam = JSON.parse(localStorage.xTeam).team_id;
-
-                fetch(`/api/limit/${idTeam}`, {
-                    method: 'get',
-                    headers: getHeaders(true, false)
-                }
-                ).then(res => {
-                    return res.json();
-                }).then(res1 => {
-
-                    fetch(`/api/usage/${idTeam}`, {
-                        method: 'get',
-                        headers: getHeaders(true, false)
-                    }
-                    ).then(res => {
-                        return res.json();
-                    }).then(res2 => {
-                        this.setState({ team: { ...this.state.team, maxSpaceBytes: res1.maxSpaceBytes}});
-                        this.setState({ team: { ...this.state.team, usedSpace: res2.usedSpace}});   
-                    }).catch(err => {
-                        console.log('Error on fetch /api/usage', err);
-                    });
-
-                }).catch(err => {
-                    console.log('Error on fetch /api/limit', err);
-                });
+                this.getTeamUsage();
             }
         } catch {
             history.push('/login');
@@ -143,6 +144,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         }
 
         this.renderBar();
+
         if (this.props.showFileButtons) {
             this.renderFileButtons();
         }
@@ -175,7 +177,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         }).catch(err => {
             console.log('Error on fetch /api/usage', err);
         });
-        
+
     }
 
     componentDidUpdate(prevProps) {
@@ -188,25 +190,27 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
 
     renderBar() {
         if (this.props.isTeam) {
-            this.setState({ spaceBar:
-                <div>
-                    <div className="dropdown-menu-group info">
-                        <p className="name-lastname">My Team</p>
-                        <ProgressBar className="mini-progress-bar" now={this.state.team.usedSpace} max={this.state.team.maxSpaceBytes} />
-                        <p className="space-used">Used <strong>{PrettySize(this.state.team.usedSpace)}</strong> of <strong>{PrettySize(this.state.team.maxSpaceBytes)}</strong></p>
+            this.setState({
+                spaceBar:
+                    <div>
+                        <div className="dropdown-menu-group info">
+                            <p className="name-lastname">My Team</p>
+                            <ProgressBar className="mini-progress-bar" now={this.state.team.usedSpace} max={this.state.team.maxSpaceBytes} />
+                            <p className="space-used">Used <strong>{PrettySize(this.state.team.usedSpace)}</strong> of <strong>{PrettySize(this.state.team.maxSpaceBytes)}</strong></p>
+                        </div>
                     </div>
-                </div>
             });
         } else {
             const user = JSON.parse(localStorage.xUser || '{}');
-            this.setState({ spaceBar: 
-                <div>
-                    <div className="dropdown-menu-group info">
-                        <p className="name-lastname">{user.name} {user.lastname}</p>
-                        <ProgressBar className="mini-progress-bar" now={this.state.barUsage} max={this.state.barLimit} />
-                        <p className="space-used">Used <strong>{PrettySize(this.state.barUsage)}</strong> of <strong>{PrettySize(this.state.barLimit)}</strong></p>
+            this.setState({
+                spaceBar:
+                    <div>
+                        <div className="dropdown-menu-group info">
+                            <p className="name-lastname">{user.name} {user.lastname}</p>
+                            <ProgressBar className="mini-progress-bar" now={this.state.barUsage} max={this.state.barLimit} />
+                            <p className="space-used">Used <strong>{PrettySize(this.state.barUsage)}</strong> of <strong>{PrettySize(this.state.barLimit)}</strong></p>
+                        </div>
                     </div>
-                </div>           
             });
         }
     }
@@ -235,12 +239,12 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
     handleChangeWorkspace(e) {
         let event = false;
         if (e === 'personal') {
-            this.setState({ workspace: 'My Workspace'});
+            this.setState({ workspace: 'My Workspace' });
             event = false;;
         } else {
-            this.setState({ workspace: 'Team Workspace'});
+            this.setState({ workspace: 'Team Workspace' });
             event = true;
-        }          
+        }
         console.log("CAMBIANDO DE WORKSPACE");
         console.log(e);
         this.props.handleChangeWorkspace && this.props.handleChangeWorkspace(event);
@@ -253,7 +257,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
 
         console.log(team)
         console.log(user)
- 
+
         if (team && team.admin === user.email) {
             history.push("/teams/password");
         } else {
@@ -279,12 +283,12 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                 <Navbar.Brand>
                     <a href="/"><img src={logo} alt="Logo" /></a>
                 </Navbar.Brand>
-                
+
                 <Dropdown className="dropdownButton" >
-                    <DropdownButton id="1"  className="dropdownButton" title={this.state.workspace} onSelect={this.handleChangeWorkspace.bind(this)} type="toggle">
+                    <DropdownButton id="1" className="dropdownButton" title={this.state.workspace} onSelect={this.handleChangeWorkspace.bind(this)} type="toggle">
                         <Dropdown.Item eventKey="personal">My Workspace</Dropdown.Item>
                         <Dropdown.Item eventKey="team">Team Workspace</Dropdown.Item>
-                    </DropdownButton>   
+                    </DropdownButton>
                 </Dropdown>
                 <Nav className="m-auto">
                     {this.state.navbarItems}

@@ -105,7 +105,7 @@ class XCloud extends React.Component {
     return new Promise((resolve, reject) => {
       fetch('/api/teams/initialize', {
         method: 'post',
-        headers: getHeaders(true, true, true),
+        headers: getHeaders(true, true),
         body: JSON.stringify({
           email: JSON.parse(localStorage.getItem("xTeam") || "{}").user,
           mnemonic: JSON.parse(localStorage.getItem("xTeam") || "{}").mnemonic
@@ -119,10 +119,10 @@ class XCloud extends React.Component {
             xTeamJson.root_folder_id = body.userData.root_folder_id;
             localStorage.setItem('xTeam', JSON.stringify(xTeamJson));
             console.log(xTeamJson)
-            
-           
-          
-          
+ 
+
+
+
             
             //const root = body.userData.root_folder_id;
             //xteam.root_folder_id = root; 
@@ -375,17 +375,12 @@ class XCloud extends React.Component {
     });
   };
 
-  getFolderContent = (rootId, updateNamePath = true, teamId = null) => {
-    var route = '';
-    if (teamId) {
-      route = `/api/storage/folder/${rootId}/${teamId}`;
-    } else {
-      route = `/api/storage/folder/${rootId}`;
-    }
+  getFolderContent = (rootId, updateNamePath = true, isTeam = false) => {
+    var route = `/api/storage/folder/${rootId}`;
 
     fetch(route, {
       method: 'get',
-      headers: getHeaders(true, true),
+      headers: getHeaders(true, true, isTeam),
     })
       .then((res) => {
         if (res.status !== 200) {
@@ -573,7 +568,7 @@ class XCloud extends React.Component {
   downloadFile = (id, _class, pcb) => {
     return new Promise((resolve) => {
       axios.interceptors.request.use((config) => {
-        const headers = getHeaders(true, true)
+        const headers = getHeaders(true, true, this.state.isTeam)
         headers.forEach((value, key) => {
           config.headers[key] = value
         })
@@ -657,7 +652,7 @@ class XCloud extends React.Component {
       const uploadUrl = `/api/storage/folder/${parentFolderId}/upload`;
 
       // Headers with Auth & Mnemonic
-      let headers = getHeaders(true, true);
+      let headers = getHeaders(true, true, this.state.isTeam);
       headers.delete('content-type');
 
       // Data
