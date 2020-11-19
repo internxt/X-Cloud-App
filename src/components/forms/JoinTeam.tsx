@@ -55,18 +55,13 @@ class JoinTeam extends React.Component<Props, State> {
         toast.info("You've been joined succesfully to the team!");
         history.push('/');
       } else {
-        console.log(response)
         // Wrong activation
         this.setState({ isTeamActivated: false })
-        console.log('error', token)
         toast.info("You've been NOT joined succesfully to the team!");
-        console.log('error', token)
       }
 
     }).catch(error => {
       this.setState({ isTeamActivated: false })
-      console.log('Activation error: ' + error);
-
     })
   }
 

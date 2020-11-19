@@ -140,10 +140,9 @@ class New extends React.Component<NewProps, NewState> {
             curve: 'ed25519',                                           // ECC curve name        // protects the private key
         });
         
+        //Datas
        const encPrivateKey = AesUtil.encrypt(privateKeyArmored,this.state.register.password,false);
        const decKey = AesUtil.decrypt(encPrivateKey,this.state.register.password);
-
-       
        const codpublicKey = Buffer.from(publicKeyArmored).toString('base64');;
        const codrevocationKey = Buffer.from(revocationCertificate).toString('base64');
   
@@ -169,8 +168,6 @@ class New extends React.Component<NewProps, NewState> {
                     // Manage succesfull register
                     const { token, user } = body;
                     localStorage.setItem('xToken', token);
-                    
-
                     // Clear form fields
                     this.setState({
                         register: {

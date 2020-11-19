@@ -164,6 +164,7 @@ class Login extends React.Component<LoginProps> {
             const base64revocationKey = Buffer.from(revocationCertificate).toString('base64');
             const decPrivateKey = AesUtil.decrypt(encPrivateKey, this.state.password);
             const base64privateKey = Buffer.from(privateKeyArmored).toString('base64');
+            
             fetch('/api/user/generateKey', {
               method: 'post',
               headers: getHeaders(true, false),
@@ -246,15 +247,9 @@ class Login extends React.Component<LoginProps> {
 
               const StoragepubKey = localStorage.xKeyPublic;
               const mnemonicDecode = Buffer.from(data.userTeam.bridge_mnemonic, 'base64').toString()
-              console.log(data.userTeam)
-              console.log('MNEMONIC DECODIFICADO', mnemonicDecode);
-              console.log('STORAGE PUB KEY', StoragepubKey);
-              console.log(data.userTeam.bridge_mnemonic)
-
               const privKey = localStorage.xKeys;
               const privateKeys = (await openpgp.key.readArmored(privKey)).keys;
-              console.log('PRIV KEYS', privKey)
-              console.log('ARMORED LEIDO', privateKeys)
+          
 
               const mnemonicDecrypt = await openpgp.decrypt({
                 message: await openpgp.message.readArmored(mnemonicDecode),              // parse armored message
@@ -272,7 +267,7 @@ class Login extends React.Component<LoginProps> {
               localStorage.setItem('xTeam', JSON.stringify(team));
               localStorage.setItem('xTokenTeam', data.tokenTeam);
             } else {
-              console.error('NO HAY TEAM')
+              console.error('NOT HAVE A TEAM')
             }
             this.setState({
               isAuthenticated: true,

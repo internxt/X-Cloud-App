@@ -94,38 +94,6 @@ class Teams extends React.Component<Props, State> {
         return !(!localStorage.xToken);
     }
 
-    getTeamByMember = (memberEmail: string) => {
-        return new Promise((resolve, reject) => {
-            fetch(`/api/teams-members/${memberEmail}`, {
-                method: 'get',
-                headers: getHeaders(true, false)
-            }).then((result: Response) => {
-                if (result.status !== 200) { throw result }
-                return result.json()
-            }).then(result => {
-                resolve(result);
-            }).catch(err => {
-                reject(err);
-            });
-        });
-    }
-
-    getTeamByUserOwner = (ownerEmail: string) => {
-        return new Promise((resolve, reject) => {
-            fetch(`/api/teams/${ownerEmail}`, {
-                method: 'get',
-                headers: getHeaders(true, false)
-            }).then((result: Response) => {
-                if (result.status !== 200) { throw result }
-                return result.json()
-            }).then(result => {
-                resolve(result);
-            }).catch(err => {
-                reject(err);
-            });
-        });
-    }
-
     componentDidMount() {
         if (!this.isLoggedIn()) {
             history.push('/login');
@@ -151,33 +119,26 @@ class Teams extends React.Component<Props, State> {
         }).then((response) => {
             response.json().then(async (rp) => {
                 //Datas
-                console.log('RESPUESTA CLAVE PUBLICA PETICION',rp.publicKey)
                 const bridgePass = JSON.parse(localStorage.getItem("xTeam") || "{}").password;
                 const mnemonicTeam = JSON.parse(localStorage.getItem("xTeam") || "{}").mnemonic;
-                console.log(mnemonicTeam)
                 const publicKeyArmored = Buffer.from(rp.publicKey, 'base64').toString()
-                console.log('ARMORED PUBLIC KEY',publicKeyArmored)
                 
                 //Encrypt
                 const EncryptBridgePass = await openpgp.encrypt({
                     message: openpgp.message.fromText(bridgePass),                 
                     publicKeys: ((await openpgp.key.readArmored(publicKeyArmored)).keys),   
                 });
-                console.log('BRIDGE PASS ENCRIPTADO',EncryptBridgePass.data)
-
                 const EncryptMnemonicTeam = await openpgp.encrypt({
                     message: openpgp.message.fromText(mnemonicTeam),                 
                     publicKeys: ((await openpgp.key.readArmored(publicKeyArmored)).keys), 
                       
                 });
-                console.log('MNEMONIC ENCRIPTADO',EncryptMnemonicTeam.data)
 
                 const base64bridge_password = Buffer.from(EncryptBridgePass.data).toString('base64')
                 const base64Mnemonic = Buffer.from(EncryptMnemonicTeam.data).toString('base64')
 
-                console.log('MNEMONIC EN BASE 64', base64Mnemonic)
              
-                await fetch('/api/team-invitations', {
+                await fetch('/api/teams/team-invitations', {
                     method: 'POST',
                     headers: getHeaders(true, false, true),
                     body: JSON.stringify({
@@ -216,7 +177,6 @@ class Teams extends React.Component<Props, State> {
         e.preventDefault();
 
     }
-
 
 
     renderProductDescription = (): JSX.Element => {
@@ -350,34 +310,6 @@ class Teams extends React.Component<Props, State> {
                 </Container>
             </Container>
         </div>
-        );
-    }
-
-
-    renderPassword = (): JSX.Element => {
-        return (
-            <div className="password">
-                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} />
-
-                <Container className="login-container-box edit-password-box">
-                    <div className="container-register">
-                        <p className="container-title edit-password">Enter your team password</p>
-                        <Form className="form-register" onSubmit={this.handlePassword} >
-                            <Form.Row>
-                                <Form.Group as={Col} controlId="teamPassword">
-                                    <Form.Control placeholder="Team password" required type="password" onChange={this.handleChangePass} value={this.state.team.teamPassword} autoFocus />
-                                </Form.Group>
-                            </Form.Row>
-                            <Form.Row className="form-register-submit">
-                                <Form.Group as={Col}>
-                                    <Button className="on btn-block" type="submit">Enter password</Button>
-                                </Form.Group>
-                            </Form.Row>
-                        </Form>
-                    </div>
-                </Container>
-
-            </div>
         );
     }
 

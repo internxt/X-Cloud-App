@@ -67,7 +67,7 @@ class App extends React.Component {
           <Route path='/checkout/:sessionId' render={(props) => <Checkout {...props} />} />
           <Route exact path='/reset' render={(props) => <Reset {...props} isAuthenticated={this.state.isAuthenticated} />} />
           <Route exact path='/settings' render={(props) => <Reset {...props} isAuthenticated={this.state.isAuthenticated} />} />
-          <Route exact path='/teams/:option' render={(props) => <Teams {...props} isAuthenticated={this.state.isAuthenticated} />} />
+          <Route exact path='/teams/' render={(props) => <Teams {...props} isAuthenticated={this.state.isAuthenticated} />} />
           <Route path='/teams/join/:token' render={(props) => <JoinTeam {...props} />} />
           <Route path='/activations/:token' render={(props) => <Activation {...props} />} />
           <Route path='/deactivations/:token' render={(props) => <Deactivation {...props} />} />

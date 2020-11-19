@@ -243,7 +243,7 @@ class XCloud extends React.Component {
     if (folderName && folderName !== '') {
       fetch(`/api/storage/folder`, {
         method: 'post',
-        headers: getHeaders(true, true),
+        headers: getHeaders(true, true,this.state.isTeam),
         body: JSON.stringify({
           parentFolderId: this.state.currentFolderId,
           folderName,
@@ -450,7 +450,7 @@ class XCloud extends React.Component {
     if (isFolder) {
       fetch(`/api/storage/folder/${itemId}/meta`, {
         method: 'post',
-        headers: getHeaders(true, true),
+        headers: getHeaders(true, true,this.state.isTeam),
         body: data,
       })
         .then(() => {
