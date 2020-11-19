@@ -762,12 +762,7 @@ class XCloud extends React.Component {
             toast.warn(`"${err}"`);
           } else if (parentFolderId === currentFolderId) {
             resolve();
-
-            this.getFolderContent(
-              currentFolderId,
-              true,
-              _.last(this.state.namePath).id_team || null
-            );
+            this.getFolderContent(currentFolderId);
           } else {
             resolve();
           }
@@ -775,6 +770,7 @@ class XCloud extends React.Component {
       );
     });
   };
+
 
   uploadFile = (e) => this.handleUploadFiles(e.target.files);
 
@@ -802,7 +798,7 @@ class XCloud extends React.Component {
     //const bucket = _.last(this.state.namePath).bucket;
     const fetchOptions = {
       method: 'DELETE',
-      headers: getHeaders(true, false),
+      headers: getHeaders(true, false,this.state.isTeam),
     };
     if (selectedItems.length === 0) return;
     const deletionRequests = _.map(selectedItems, (v, i) => {

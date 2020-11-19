@@ -231,7 +231,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                 <HeaderButton icon={deleteFile} name="Delete" clickHandler={this.props.deleteItems} />
                 <HeaderButton icon={share} name="Share" clickHandler={this.props.shareItem} />
                 <input id="uploadFileControl" type="file" onChange={this.props.uploadHandler} multiple={true} />
-                {this.props.isTeam? <HeaderButton icon={teamsIcon} name="Team settings" clickHandler={this.props.showTeamSettings} /> : ''}
+                {this.props.isTeam? <HeaderButton icon={teamsIcon} name="Team settings" clickHandler={this.props.showTeamSettings}/> : ''}
             </Nav>
         })
     }

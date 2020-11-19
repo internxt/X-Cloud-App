@@ -137,9 +137,7 @@ class Teams extends React.Component<Props, State> {
             case 'settings':
                 this.setState({ template: this.renderTeamSettings.bind(this) })
                 break;
-            case 'password':
-                this.setState({ template: this.renderPassword.bind(this) })
-                break;
+
             default:
                 this.setState({ template: this.renderPlans.bind(this) })
                 break;
@@ -205,9 +203,6 @@ class Teams extends React.Component<Props, State> {
         }).catch((error) => {
             console.log('Error getting pubKey', error);
         });
-
-      
-
     }
 
 
@@ -405,7 +400,7 @@ class Teams extends React.Component<Props, State> {
     render() {
         return (
             <div>
-                {this.renderPlans()}
+                {this.renderTeamSettings()}
             </div>
         );
     }
