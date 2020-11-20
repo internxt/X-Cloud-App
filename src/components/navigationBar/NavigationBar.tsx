@@ -41,20 +41,10 @@ interface NavigationBarProps {
 interface NavigationBarState {
     navbarItems: JSX.Element
     workspace: string
-    teamBar: any
     menuButton: any
     barLimit: number
     barUsage: number
-    spaceBar: JSX.Element
     isTeam: Boolean
-    teamName: string
-    team: {
-        name: string
-        barLimit: number
-        barUsage: number
-        maxSpaceBytes: number
-        usedSpace: number
-    }
 }
 
 class NavigationBar extends React.Component<NavigationBarProps, NavigationBarState> {
@@ -67,17 +57,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             workspace: 'My Workspace',
             barLimit: 1024 * 1024 * 1024 * 2,
             barUsage: 0,
-            spaceBar: <div />,
             isTeam: this.props.isTeam,
-            teamName: '',
-            teamBar: null,
-            team: {
-                name: '',
-                barLimit: 1024 * 1024 * 1024 * 2,
-                barUsage: 0,
-                maxSpaceBytes: 0,
-                usedSpace: 0
-            }
         };
     }
 
@@ -100,30 +80,21 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         return "Unknown"
     }
 
-    getTeamUsage() {
-        this.setState({ workspace: 'Team Workspace' })
-        const isTeam = true;
+    async getUsage(isTeam: Boolean = false) {
 
-        fetch(`/api/limit/${isTeam}`, {
-            method: 'get',
-            headers: getHeaders(true, false)
-        }).then(res => {
-            return res.json();
-        }).then(res1 => {
-            fetch(`/api/usage/${isTeam}`, {
-                method: 'get',
-                headers: getHeaders(true, false)
-            }).then(res3 => {
-                return res3.json();
-            }).then(res4 => {
-                this.setState({ team: { ...this.state.team, maxSpaceBytes: res1.maxSpaceBytes } });
-                this.setState({ team: { ...this.state.team, usedSpace: res4.usedSpace } });
-            }).catch(err => {
-                console.log('Error on fetch /api/usage', err);
-            });
-        }).catch(err => {
-            console.log('Error on fetch /api/limit', err);
-        });
+        const limit = await fetch('/api/limit/', {
+            headers: getHeaders(true, false, isTeam)
+        }).then(res => res.json())
+
+        const usage = await fetch('/api/usage/', {
+            headers: getHeaders(true, false, isTeam)
+        }).then(res3 => res3.json())
+
+        this.setState({
+            barUsage: usage.total,
+            barLimit: limit.maxSpaceBytes
+        })
+
     }
 
     componentDidMount() {
@@ -133,88 +104,26 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             if (user == null) {
                 throw new Error();
             }
-
-            if (this.state.isTeam) {
-                this.setState({ workspace: 'Team Workspace' })
-                this.getTeamUsage();
-            }
         } catch {
             history.push('/login');
             return;
         }
-
-        this.renderBar();
-
         if (this.props.showFileButtons) {
             this.renderFileButtons();
         }
-
-
-        fetch('/api/limit', {
-            method: 'get',
-            headers: getHeaders(true, false)
-        }
-        ).then(res => {
-            return res.json();
-        }).then(res2 => {
-            analytics.identify(getUuid(), {
-                email: getUserData().email,
-                plan: this.identifyPlan(res2.maxSpaceBytes)
-            })
-            this.setState({ barLimit: res2.maxSpaceBytes })
-        }).catch(err => {
-            console.log('Error on fetch /api/limit', err);
-        });
-
-        fetch('/api/usage', {
-            method: 'get',
-            headers: getHeaders(true, false)
-        }
-        ).then(res => {
-            return res.json();
-        }).then(res2 => {
-            this.setState({ barUsage: res2.total })
-        }).catch(err => {
-            console.log('Error on fetch /api/usage', err);
-        });
+        this.getUsage(this.state.isTeam);
 
     }
 
     componentDidUpdate(prevProps) {
         if (this.props.isTeam !== prevProps.isTeam) {
+            this.getUsage(this.props.isTeam);
             this.setState({ isTeam: this.props.isTeam });
             this.renderFileButtons();
-            this.renderBar();
-        }
-    }
 
-    renderBar() {
-        if (this.props.isTeam) {
-            this.setState({
-                spaceBar:
-                    <div>
-                        <div className="dropdown-menu-group info">
-                            <p className="name-lastname">My Team</p>
-                            <ProgressBar className="mini-progress-bar" now={this.state.team.usedSpace} max={this.state.team.maxSpaceBytes} />
-                            <p className="space-used">Used <strong>{PrettySize(this.state.team.usedSpace)}</strong> of <strong>{PrettySize(this.state.team.maxSpaceBytes)}</strong></p>
-                        </div>
-                    </div>
-            });
-        } else {
-            const user = JSON.parse(localStorage.xUser || '{}');
-            this.setState({
-                spaceBar:
-                    <div>
-                        <div className="dropdown-menu-group info">
-                            <p className="name-lastname">{user.name} {user.lastname}</p>
-                            <ProgressBar className="mini-progress-bar" now={this.state.barUsage} max={this.state.barLimit} />
-                            <p className="space-used">Used <strong>{PrettySize(this.state.barUsage)}</strong> of <strong>{PrettySize(this.state.barLimit)}</strong></p>
-                        </div>
-                    </div>
-            });
         }
-    }
 
+    }
 
 
     renderFileButtons() {
@@ -231,7 +140,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                 <HeaderButton icon={deleteFile} name="Delete" clickHandler={this.props.deleteItems} />
                 <HeaderButton icon={share} name="Share" clickHandler={this.props.shareItem} />
                 <input id="uploadFileControl" type="file" onChange={this.props.uploadHandler} multiple={true} />
-                {this.props.isTeam? <HeaderButton icon={teamsIcon} name="Team settings" clickHandler={this.props.showTeamSettings}/> : ''}
+                {this.props.isTeam ? <HeaderButton icon={teamsIcon} name="Team settings" clickHandler={this.props.showTeamSettings} /> : ''}
             </Nav>
         })
     }
@@ -297,7 +206,11 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                     <Dropdown drop="left" className="settingsButton">
                         <Dropdown.Toggle id="1"><HeaderButton icon={account} name="Menu" /></Dropdown.Toggle>
                         <Dropdown.Menu>
-                            {this.state.spaceBar}
+                            <div className="dropdown-menu-group info">
+                                <p className="name-lastname"> {this.state.isTeam ? 'My Team' : `${user.name} ${user.lastname}`} </p>
+                                <ProgressBar className="mini-progress-bar" now={this.state.barUsage} max={this.state.barLimit} />
+                                <p className="space-used">Used <strong>{PrettySize(this.state.barUsage)}</strong> of <strong>{PrettySize(this.state.barLimit)}</strong></p>
+                            </div>
                             <Dropdown.Divider />
                             <div className="dropdown-menu-group">
                                 <Dropdown.Item onClick={(e) => { history.push('/storage'); }}>Storage</Dropdown.Item>

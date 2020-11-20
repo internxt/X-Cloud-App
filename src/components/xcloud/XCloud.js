@@ -922,6 +922,14 @@ class XCloud extends React.Component {
     }
   }
 
+  componentDidUpdate(prevProps) {
+    if (this.props.isTeam !== prevProps.isTeam) {
+        this.setState({ isTeam: this.props.isTeam });
+       
+    }
+}
+
+
   showTeamSettings = () => {
     history.push("/teams/settings");
   }
