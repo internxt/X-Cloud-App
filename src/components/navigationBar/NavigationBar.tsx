@@ -11,6 +11,8 @@ import newFolder from '../../assets/Dashboard-Icons/Add-folder.svg';
 import deleteFile from '../../assets/Dashboard-Icons/Delete.svg';
 import share from '../../assets/Dashboard-Icons/Share.svg';
 import teamsIcon from '../../assets/Dashboard-Icons/teamsIcon.svg';
+import usuario from '../../assets/Dashboard-Icons/usuario.svg';
+
 import PrettySize from 'prettysize';
 
 import HeaderButton from './HeaderButton';
@@ -81,7 +83,6 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
     }
 
     async getUsage(isTeam: Boolean = false) {
-
         const limit = await fetch('/api/limit/', {
             headers: getHeaders(true, false, isTeam)
         }).then(res => res.json())
@@ -94,7 +95,6 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             barUsage: usage.total,
             barLimit: limit.maxSpaceBytes
         })
-
     }
 
     componentDidMount() {
@@ -140,7 +140,9 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                 <HeaderButton icon={deleteFile} name="Delete" clickHandler={this.props.deleteItems} />
                 <HeaderButton icon={share} name="Share" clickHandler={this.props.shareItem} />
                 <input id="uploadFileControl" type="file" onChange={this.props.uploadHandler} multiple={true} />
-                {this.props.isTeam ? <HeaderButton icon={teamsIcon} name="Team settings" clickHandler={this.props.showTeamSettings} /> : ''}
+                {!this.props.isTeam ? <HeaderButton icon={teamsIcon} name="Team "  clickHandler={this.handleChangeWorkspace.bind(this)} /> : ''}
+                {this.props.isTeam ? <HeaderButton icon={usuario} name="Personal "  clickHandler={this.handleChangeWorkspace.bind(this)} /> : ''}
+
             </Nav>
         })
     }

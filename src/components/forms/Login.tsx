@@ -258,6 +258,7 @@ class Login extends React.Component<LoginProps> {
               });
 
               const team = {
+                idTeam: data.userTeam.idTeam,
                 user: data.userTeam.bridge_user,
                 password: data.userTeam.bridge_password,
                 mnemonic: mnemonicDecrypt.data,

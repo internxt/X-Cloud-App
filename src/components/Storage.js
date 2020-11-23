@@ -25,16 +25,18 @@ class Storage extends React.Component {
         max: 0,
         now: 0,
 
-        modalDeleteAccountShow: false
+        modalDeleteAccountShow: false,
+        
     }
 
     componentDidMount() {
         // Check auth and redirect to login if necessary
         if (!localStorage.xUser) {
-            history.push('/login');
-        } else {
-            this.usageLoader();
+            return history.push('/login');
         }
+
+        this.getUsage();
+        
     }
 
     payMethodLoader = (plan) => {
@@ -44,32 +46,21 @@ class Storage extends React.Component {
             });
         }
     }
+    async getUsage(isTeam = false) {
 
-    usageLoader = () => {
-        fetch('/api/limit', {
-            method: 'get',
-            headers: getHeaders(true, false)
-        }
-        ).then(res => {
-            return res.json();
-        }).then(res1 => {
+        const limit = await fetch('/api/limit/', {
+            headers: getHeaders(true, false, isTeam)
+        }).then(res => res.json())
 
-            fetch('/api/usage', {
-                method: 'get',
-                headers: getHeaders(true, false)
-            }).then(res => res.json())
-                .then(res2 => {
-                    this.setState({ 
-                        max: res1.maxSpaceBytes,
-                        now: res2.total 
-                    })
-                }).catch(err => {
-                    console.log('Error getting /api/usage for storage bar', err);
-                });
+        const usage = await fetch('/api/usage/', {
+            headers: getHeaders(true, false, isTeam)
+        }).then(res3 => res3.json())
 
-        }).catch(err => {
-            console.log('Error getting /api/limit for storage bar', err);
-        });
+        this.setState({
+            now: usage.total,
+            max: limit.maxSpaceBytes
+        })
+
     }
 
     handleCancelAccount = () => {
@@ -86,11 +77,12 @@ class Storage extends React.Component {
             });
     }
 
+  
 
     render() {
         return (
             <div className="settings">
-                <NavigationBar navbarItems={<h5>Storage</h5>} showSettingsButton={true} />
+                <NavigationBar navbarItems={<h5>Storage</h5>} showSettingsButton={true}  />
                 <InxtContainer>
                     <p className="title">Storage Used</p>
 

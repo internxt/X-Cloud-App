@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container } from 'react-bootstrap';
+import { Container, ListGroup } from 'react-bootstrap';
 import './Login.scss';
 import './Reset.scss';
 import { Form, Col, Button } from 'react-bootstrap';
@@ -15,6 +15,9 @@ import { Route } from 'react-router-dom';
 import XCloud from '../xcloud/XCloud';
 import { async } from 'async';
 import logo from '../../assets/drive-logo.svg';
+import './Teams.scss';
+import { isTemplateExpression, parseConfigFileTextToJson } from 'typescript';
+
 const openpgp = require('openpgp');
 
 
@@ -43,6 +46,13 @@ interface State {
     showDescription: boolean
     template: any
     templateOption?: string
+    dataSource: Item[]
+}
+
+interface Item {
+    isMember: Boolean
+    isInvitation: Boolean
+    user: string
 }
 
 class Teams extends React.Component<Props, State> {
@@ -70,7 +80,9 @@ class Teams extends React.Component<Props, State> {
             visibility: '',
             showDescription: false,
             templateOption: renderOption,
-            template: () => { }
+            template: () => { },
+            dataSource: []
+
         }
 
         this.handleChangePass = this.handleChangePass.bind(this);
@@ -110,6 +122,24 @@ class Teams extends React.Component<Props, State> {
                 this.setState({ template: this.renderPlans.bind(this) })
                 break;
         }
+
+        const idTeam = JSON.parse(localStorage.getItem('xTeam') || '{}').idTeam;
+        return fetch(`/api/teams/members/${idTeam}`, {
+            method: 'get',
+            headers: getHeaders(true, false),
+        }).then((response) => {
+            response.json().then((response) => {
+
+                this.setState({ dataSource: response })
+                console.log('respuesta', response)
+            }).catch((error) => {
+                console.log(error);
+            });
+        }).catch((error) => {
+            console.log();
+        });
+
+
     }
 
     sendEmailTeamsMember = async (mail) => {
@@ -122,22 +152,22 @@ class Teams extends React.Component<Props, State> {
                 const bridgePass = JSON.parse(localStorage.getItem("xTeam") || "{}").password;
                 const mnemonicTeam = JSON.parse(localStorage.getItem("xTeam") || "{}").mnemonic;
                 const publicKeyArmored = Buffer.from(rp.publicKey, 'base64').toString()
-                
+
                 //Encrypt
                 const EncryptBridgePass = await openpgp.encrypt({
-                    message: openpgp.message.fromText(bridgePass),                 
-                    publicKeys: ((await openpgp.key.readArmored(publicKeyArmored)).keys),   
+                    message: openpgp.message.fromText(bridgePass),
+                    publicKeys: ((await openpgp.key.readArmored(publicKeyArmored)).keys),
                 });
                 const EncryptMnemonicTeam = await openpgp.encrypt({
-                    message: openpgp.message.fromText(mnemonicTeam),                 
-                    publicKeys: ((await openpgp.key.readArmored(publicKeyArmored)).keys), 
-                      
+                    message: openpgp.message.fromText(mnemonicTeam),
+                    publicKeys: ((await openpgp.key.readArmored(publicKeyArmored)).keys),
+
                 });
 
                 const base64bridge_password = Buffer.from(EncryptBridgePass.data).toString('base64')
                 const base64Mnemonic = Buffer.from(EncryptMnemonicTeam.data).toString('base64')
 
-             
+
                 await fetch('/api/teams/team-invitations', {
                     method: 'POST',
                     headers: getHeaders(true, false, true),
@@ -177,7 +207,6 @@ class Teams extends React.Component<Props, State> {
         e.preventDefault();
 
     }
-
 
     renderProductDescription = (): JSX.Element => {
         if (this.state.showDescription) {
@@ -270,47 +299,70 @@ class Teams extends React.Component<Props, State> {
         return
     }
 
+    deletePeople = (item: Item) => {
+        const idTeam = JSON.parse(localStorage.getItem("xTeam") || "{}").idTeam
+        fetch(`/api/teams/${item.isMember ? 'member' : 'invitation'}`, {
+            method: 'delete',
+            headers: getHeaders(true, false),
+            body: JSON.stringify({
+                item: item,
+                idTeam: idTeam
+            })
+        }).then((response) => {
+            if (response.status == 200) {
+                toast.info('The user has been successfully deleted');
+            }
+           console.log(response)
+        }).catch(err => {
+            toast.warn(`Error: ${err.error ? err.error : 'Internal Server Error'}`);
+        });
+    }
+
+
+
+
+
 
     renderTeamSettings = (): JSX.Element => {
-        return (<div>
-            <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} />
-            <Container className="login-main">
-                <Container className="login-container-box edit-password-box" style={{ minHeight: '430px', height: 'auto' }}>
-                    <div className="container-register">
-                        <p className="container-title edit-password" style={{ marginLeft: 0 }}>
-                            {this.state.menuTitle} your team
-                            </p>
+        return <div>
+            <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={true} showSettingsButton={true} showFileButtons={false} />
+            <div className="Teams">
+                <Container className="teams-box p-5">
+                    <Form className="form-register" onSubmit={this.sendInvitation}>
 
-                        <Form className="form-register" onSubmit={this.sendInvitation}>
-                            <Form.Row>
-                                <Form.Group as={Col} controlId="teamName">
-                                    <Form.Control placeholder="Team's name" name="team-name" value={this.state.teamName} onChange={this.handleChangePass} readOnly={true} /><p>
-                                        Manage your team
-                            </p>
-                                </Form.Group>
-                            </Form.Row>
-                            <Form.Row>
-                                <Form.Group as={Col} controlId="invitedMember">
-                                    <div>
-                                        <input className="mail-box" type="email" required placeholder="example@example.com" value={this.state.email} onChange={this.handleEmailChange} />
-                                    </div>
-                                </Form.Group>
-                            </Form.Row>
+                        <div className="teams-title">Manage your Team</div>
+                        <div className="teams-description py-3">Welcome to ''My team'' Drive account. Here you can add and remove team members.</div>
+                        <Container className="mail-container mt-4">
+                            <div className="row">
+                                <div className="col-10 pl-0">
+                                    <Form.Control className="mail-box" type="email" placeholder="example@example.com" value={this.state.email} onChange={this.handleEmailChange} />
+                                </div>
+                                <Button className="invite-button col-2" type="submit" onClick={() => {
 
-                            <Form.Row className="form-register-submit">
-                                <Form.Group as={Col}>
+                                }}>Invite</Button>
+                            </div>
+                        </Container>
+                    </Form>
+                    <Container fluid className="lista-container mt-4">
+                            <ListGroup className='teams-lista'>
+                                {this.state.dataSource.map(item => {
+                                    return <ListGroup.Item >
+                                        <div className="row">
+                                            <div className='col-11'><span>{item.user}</span></div>
+                                            <div className='col-1'><span onClick={this.deletePeople.bind(this, item)}><i className="far fa-trash-alt"></i></span></div>
+                                        </div>
 
-                                    <Button className="send-button" type="submit">Invite</Button>
 
-                                </Form.Group>
-                            </Form.Row>
-                        </Form>
+                                    </ListGroup.Item>
+                                })}
 
-                    </div>
+
+                            </ListGroup>
+                    </Container>
+
                 </Container>
-            </Container>
+            </div>
         </div>
-        );
     }
 
     renderActivation = (): JSX.Element => {

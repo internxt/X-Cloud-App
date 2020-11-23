@@ -9,7 +9,6 @@ import iconInxt from '../assets/PaymentBridges/inxt.svg'
 import iconPayPal from '../assets/PaymentBridges/paypal.svg'
 
 import { getHeaders } from '../lib/auth'
-import { isReturnStatement } from 'typescript';
 const bip39 = require('bip39')
 const openpgp = require('openpgp');
 const AesUtil = require('./AesUtil');
@@ -140,12 +139,14 @@ class TeamsPlans extends React.Component {
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <p className="title1">Team Plans</p>
                     <span
-                        onMouseOver={() => {
+                        onClick={() => {
                             this.props.handleShowDescription(true);
                         }}
-                        onMouseOut={() => {
+                        /*
+                        onClick={() => {
                             this.props.handleShowDescription(false);
                         }}
+                        */
                     ><i className="fas fa-info-circle"></i></span>
                 </div>
 
@@ -154,8 +155,7 @@ class TeamsPlans extends React.Component {
                     <Spinner animation="border" size="sm" />
                 </div> : ''}
                 {this.state.productsLoading === 'error' ? 'There was an error loading the available plans: The server was unreachable. Please check your network connection and reload.' : ''}
-
-                <Row className='mt-4'>
+                <Row className='mt-0'>
                     {this.state.availableProducts ?
                         this.state.availableProducts.map((entry, i) => {
                             // Print the list of available products
@@ -172,7 +172,7 @@ class TeamsPlans extends React.Component {
                                     'Free' :
                                     <span>
                                         <span style={{ display: 'block' }}>{entry.metadata.team_members !== 'unlimited' ? `Up to ${entry.metadata.team_members} members` : 'Unlimited'}</span>
-                                        <span style={{ display: 'block' }}>€{entry.metadata.price_eur}<span style={{ color: '#7e848c', fontWeight: 'normal' }}>/month</span></span>
+                                        <span style={{ display: 'block' }}>€{entry.metadata.price_eur}<span style={{textAlign:'center', color: '#7e848c', fontWeight: 'normal' }}>/month</span></span>
                                     </span>
                                 } />
                         })
