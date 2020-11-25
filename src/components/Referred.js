@@ -55,7 +55,6 @@ class Referred extends React.Component {
 
                 console.log(this.state.credit);
             }).catch(err => {
-                console.log("Hola desde el error", err);
             });
     }
 

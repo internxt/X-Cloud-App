@@ -23,8 +23,6 @@ function getHeaders(withAuth: Boolean, withMnemonic: Boolean, isTeam: Boolean = 
         }
     }
 
-    console.log(headers.get('internxt-mnemonic'))
-
     return headers;
 }
 

@@ -18,6 +18,7 @@ import Checkout from './components/Checkout';
 import Referred from './components/Referred';
 import Teams from './components/forms/Teams';
 import JoinTeam from './components/forms/JoinTeam';
+import DeactivationTeams from './components/forms/DeactivationTeam';
 
 
 
@@ -71,6 +72,7 @@ class App extends React.Component {
           <Route path='/teams/join/:token' render={(props) => <JoinTeam {...props} />} />
           <Route path='/activations/:token' render={(props) => <Activation {...props} />} />
           <Route path='/deactivations/:token' render={(props) => <Deactivation {...props} />} />
+          <Route path='/deactivationsTeams/:token' render={(props) => <DeactivationTeams {...props} />} />
           <Route path='/security' render={(props) => <Security {...props} isAuthenticated={this.state.isAuthenticated} />} />
           <Route exact path='/app' render={(props) => <XCloud {...props}
             isAuthenticated={this.state.isAuthenticated}

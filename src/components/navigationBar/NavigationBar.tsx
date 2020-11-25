@@ -1,5 +1,5 @@
 import React from 'react';
-import { Nav, Navbar, Dropdown, ProgressBar, DropdownButton } from 'react-bootstrap';
+import { Nav, Navbar, Dropdown, ProgressBar } from 'react-bootstrap';
 
 // Assets
 import account from '../../assets/Dashboard-Icons/Account.svg';
@@ -11,7 +11,8 @@ import newFolder from '../../assets/Dashboard-Icons/Add-folder.svg';
 import deleteFile from '../../assets/Dashboard-Icons/Delete.svg';
 import share from '../../assets/Dashboard-Icons/Share.svg';
 import teamsIcon from '../../assets/Dashboard-Icons/teamsIcon.svg';
-import usuario from '../../assets/Dashboard-Icons/usuario.svg';
+import personalIcon from '../../assets/Dashboard-Icons/personalIcon.svg';
+
 
 import PrettySize from 'prettysize';
 
@@ -37,6 +38,9 @@ interface NavigationBarProps {
     showTeamSettings?: any
     isTeam: Boolean
     handleChangeWorkspace?: any
+    isAdmin: Boolean
+    isMember: Boolean
+    
 }
 
 
@@ -47,6 +51,8 @@ interface NavigationBarState {
     barLimit: number
     barUsage: number
     isTeam: Boolean
+    isAdmin: Boolean
+    isMember: Boolean,
 }
 
 class NavigationBar extends React.Component<NavigationBarProps, NavigationBarState> {
@@ -60,6 +66,8 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             barLimit: 1024 * 1024 * 1024 * 2,
             barUsage: 0,
             isTeam: this.props.isTeam,
+            isAdmin: this.props.isAdmin,
+            isMember: this.props.isMember,
         };
     }
 
@@ -98,6 +106,20 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
     }
 
     componentDidMount() {
+
+        if (localStorage.getItem('xTeam')) {
+            const usuario1 = JSON.parse(localStorage.getItem('xUser') || '{}').email
+            const usuario2 = JSON.parse(localStorage.getItem('xTeam') || '{}').admin
+            if (usuario1 === usuario2) {
+                this.setState({ isAdmin: true });
+            } else {
+                this.setState({ isMember: false });
+            }
+        } else {
+            this.setState({ isAdmin: true });
+        }
+
+
         let user = null;
         try {
             user = JSON.parse(localStorage.xUser).email;
@@ -127,48 +149,24 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
 
 
     renderFileButtons() {
-        this.setState({
-            navbarItems: <Nav className="m-auto">
-                <div className="top-bar">
-                    <div className="search-container">
-                        <input alt="Search files" className="search" required style={{ backgroundImage: 'url(' + search + ')' }} onChange={this.props.setSearchFunction} />
-                    </div>
-                </div>
-
-                <HeaderButton icon={uploadFileIcon} name="Upload file" clickHandler={this.props.uploadFile} />
-                <HeaderButton icon={newFolder} name="New folder" clickHandler={this.props.createFolder} />
-                <HeaderButton icon={deleteFile} name="Delete" clickHandler={this.props.deleteItems} />
-                <HeaderButton icon={share} name="Share" clickHandler={this.props.shareItem} />
-                <input id="uploadFileControl" type="file" onChange={this.props.uploadHandler} multiple={true} />
-                {!this.props.isTeam ? <HeaderButton icon={teamsIcon} name="Team "  clickHandler={this.handleChangeWorkspace.bind(this)} /> : ''}
-                {this.props.isTeam ? <HeaderButton icon={usuario} name="Personal "  clickHandler={this.handleChangeWorkspace.bind(this)} /> : ''}
-
-            </Nav>
-        })
     }
 
     handleChangeWorkspace(e) {
-        let event = false;
-        if (e === 'personal') {
-            this.setState({ workspace: 'My Workspace' });
-            event = false;;
+        if (this.state.isTeam) {
+            this.setState({ workspace: 'My Workspace', isTeam: false }, () => {
+                this.props.handleChangeWorkspace && this.props.handleChangeWorkspace(this.state.isTeam);
+            });
         } else {
-            this.setState({ workspace: 'Team Workspace' });
-            event = true;
+            this.setState({ workspace: 'Team Workspace', isTeam: true }, () => {
+                this.props.handleChangeWorkspace && this.props.handleChangeWorkspace(this.state.isTeam);
+            });
         }
-        console.log("CAMBIANDO DE WORKSPACE");
-        console.log(e);
-        this.props.handleChangeWorkspace && this.props.handleChangeWorkspace(event);
     }
 
 
     handleTeamSection() {
         const team = JSON.parse(localStorage.xTeam || "{}");
         const user = JSON.parse(localStorage.xUser);
-
-        console.log(team)
-        console.log(user)
-
         if (team && team.admin === user.email) {
             history.push("/teams/password");
         } else {
@@ -194,15 +192,22 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                 <Navbar.Brand>
                     <a href="/"><img src={logo} alt="Logo" /></a>
                 </Navbar.Brand>
-
-                <Dropdown className="dropdownButton" >
-                    <DropdownButton id="1" className="dropdownButton" title={this.state.workspace} onSelect={this.handleChangeWorkspace.bind(this)} type="toggle">
-                        <Dropdown.Item eventKey="personal">My Workspace</Dropdown.Item>
-                        <Dropdown.Item eventKey="team">Team Workspace</Dropdown.Item>
-                    </DropdownButton>
-                </Dropdown>
                 <Nav className="m-auto">
-                    {this.state.navbarItems}
+                    <Nav className="m-auto">
+                        <div className="top-bar">
+                            <div className="search-container">
+                                <input alt="Search files" className="search" required style={{ backgroundImage: 'url(' + search + ')' }} onChange={this.props.setSearchFunction} />
+                            </div>
+                        </div>
+
+                        <HeaderButton icon={uploadFileIcon} name="Upload file" clickHandler={this.props.uploadFile} />
+                        <HeaderButton icon={newFolder} name="New folder" clickHandler={this.props.createFolder} />
+                        <HeaderButton icon={deleteFile} name="Delete" clickHandler={this.props.deleteItems} />
+                        <HeaderButton icon={share} name="Share" clickHandler={this.props.shareItem} />
+                        <input id="uploadFileControl" type="file" onChange={this.props.uploadHandler} multiple={true} />
+                        <HeaderButton icon={this.state.isTeam ? personalIcon : teamsIcon} name="Team" clickHandler={this.handleChangeWorkspace.bind(this)} />
+                        {this.state.isTeam}
+                    </Nav>
                 </Nav>
                 <Nav style={{ margin: '0 13px 0 0' }}>
                     <Dropdown drop="left" className="settingsButton">
@@ -219,7 +224,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                                 <Dropdown.Item onClick={(e) => { history.push('/settings'); }}>Settings</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => { history.push('/security'); }}>Security</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => { history.push('/invite'); }}>Referrals</Dropdown.Item>
-                                <Dropdown.Item onClick={(e) => { history.push('/teams');; }}>Teams</Dropdown.Item>
+                                {this.state.isAdmin ? <Dropdown.Item onClick={(e) => { history.push('/teams');; }}>Teams</Dropdown.Item> : ''}
                                 <Dropdown.Item onClick={(e) => {
                                     function getOperatingSystem() {
                                         let operatingSystem = 'Not known';

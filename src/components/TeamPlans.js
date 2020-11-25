@@ -11,7 +11,6 @@ import iconPayPal from '../assets/PaymentBridges/paypal.svg'
 import { getHeaders } from '../lib/auth'
 const bip39 = require('bip39')
 const openpgp = require('openpgp');
-const AesUtil = require('./AesUtil');
 const STRIPE_DEBUG = true;
 
 const stripeGlobal = window.Stripe;
@@ -99,15 +98,9 @@ class TeamsPlans extends React.Component {
             publicKeys: ((await openpgp.key.readArmored(publicKeyArmored)).keys),// for encryption
            
         });
-        console.log(publicKeyArmored)
-        console.log(encMnemonicTeam)
         const codmnemonicTeam = Buffer.from(encMnemonicTeam.data).toString('base64');
-
         const stripe = new stripeGlobal(STRIPE_DEBUG ? process.env.REACT_APP_STRIPE_TEST_PK : process.env.REACT_APP_STRIPE_PK);
-
         const body = { plan: this.state.selectedPlanToBuy.id, sessionType: 'team', product: this.state.selectedProductToBuy.id, mnemonicTeam: codmnemonicTeam};
-
-        console.log(codmnemonicTeam.length)
 
         if (/^pk_test_/.exec(stripe._apiKey)) { body.test = true }
 
@@ -123,7 +116,6 @@ class TeamsPlans extends React.Component {
             this.setState({ statusMessage: 'Redirecting to Stripe...' });
 
             stripe.redirectToCheckout({ sessionId: result.id }).then(result => {
-                console.log(result);
             }).catch(err => {
                 this.setState({ statusMessage: 'Failed to redirect to Stripe. Reason:' + err.message });
             });
@@ -142,11 +134,11 @@ class TeamsPlans extends React.Component {
                         onClick={() => {
                             this.props.handleShowDescription(true);
                         }}
-                        /*
-                        onClick={() => {
+                        
+                        onDoubleClick={() => {
                             this.props.handleShowDescription(false);
                         }}
-                        */
+                        
                     ><i className="fas fa-info-circle"></i></span>
                 </div>
 

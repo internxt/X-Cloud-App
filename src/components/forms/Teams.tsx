@@ -2,7 +2,7 @@ import React from 'react';
 import { Container, ListGroup } from 'react-bootstrap';
 import './Login.scss';
 import './Reset.scss';
-import { Form, Col, Button } from 'react-bootstrap';
+import { Form, Button } from 'react-bootstrap';
 import NavigationBar from './../navigationBar/NavigationBar';
 import history from '../../lib/history';
 import InxtContainer from './../InxtContainer';
@@ -11,13 +11,9 @@ import { getHeaders } from '../../lib/auth';
 //saveTeamsMembersimport { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { toast } from 'react-toastify';
-import { Route } from 'react-router-dom';
-import XCloud from '../xcloud/XCloud';
-import { async } from 'async';
-import logo from '../../assets/drive-logo.svg';
 import './Teams.scss';
-import { isTemplateExpression, parseConfigFileTextToJson } from 'typescript';
-
+import closeTab from '../../assets/Dashboard-Icons/close-tab.svg';
+import Popup from 'reactjs-popup';
 const openpgp = require('openpgp');
 
 
@@ -47,6 +43,7 @@ interface State {
     template: any
     templateOption?: string
     dataSource: Item[]
+    modalDeleteAccountShow: boolean,
 }
 
 interface Item {
@@ -81,7 +78,8 @@ class Teams extends React.Component<Props, State> {
             showDescription: false,
             templateOption: renderOption,
             template: () => { },
-            dataSource: []
+            dataSource: [],
+            modalDeleteAccountShow: false,
 
         }
 
@@ -98,7 +96,6 @@ class Teams extends React.Component<Props, State> {
 
 
     handlePassword = (password: any) => {
-        console.log(password)
     }
 
 
@@ -111,17 +108,14 @@ class Teams extends React.Component<Props, State> {
             history.push('/login');
         }
 
-        const user = JSON.parse(localStorage.xUser);
 
-        switch (this.state.templateOption) {
-            case 'settings':
-                this.setState({ template: this.renderTeamSettings.bind(this) })
-                break;
-
-            default:
-                this.setState({ template: this.renderPlans.bind(this) })
-                break;
+        if(localStorage.getItem('xTeam')){
+            this.setState({ template: this.renderTeamSettings.bind(this) })
+        }else{
+            this.setState({ template: this.renderPlans.bind(this) })
         }
+
+    
 
         const idTeam = JSON.parse(localStorage.getItem('xTeam') || '{}').idTeam;
         return fetch(`/api/teams/members/${idTeam}`, {
@@ -131,7 +125,6 @@ class Teams extends React.Component<Props, State> {
             response.json().then((response) => {
 
                 this.setState({ dataSource: response })
-                console.log('respuesta', response)
             }).catch((error) => {
                 console.log(error);
             });
@@ -166,15 +159,19 @@ class Teams extends React.Component<Props, State> {
 
                 const base64bridge_password = Buffer.from(EncryptBridgePass.data).toString('base64')
                 const base64Mnemonic = Buffer.from(EncryptMnemonicTeam.data).toString('base64')
+                const bridgeuser = JSON.parse(localStorage.getItem("xTeam") || "{}").user;
+                const idTeam = JSON.parse(localStorage.getItem("xTeam") || "{}").idTeam;
 
 
                 await fetch('/api/teams/team-invitations', {
                     method: 'POST',
-                    headers: getHeaders(true, false, true),
+                    headers: getHeaders(true, false,true),
                     body: JSON.stringify({
                         email: mail,
                         bridgePass: base64bridge_password,
                         mnemonicTeam: base64Mnemonic,
+                        bridgeuser: bridgeuser,
+                        idTeam: idTeam
                     })
                 }).then(async res => {
                     return { response: res, data: await res.json() };
@@ -262,7 +259,7 @@ class Teams extends React.Component<Props, State> {
     renderPlans = (): JSX.Element => {
         return (
             <div className="settings">
-                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} />
+                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} isAdmin = {false} isMember = {false} />
 
                 <InxtContainer>
                     <TeamsPlans handleShowDescription={this.handleShowDescription} />
@@ -299,6 +296,21 @@ class Teams extends React.Component<Props, State> {
         return
     }
 
+    handleCancelAccount = () => {
+        fetch('/api/deactivateTeam', {
+            method: 'GET',
+            headers: getHeaders(true, false,true)
+        })
+            .then(res => res.json())
+            .then(res => {
+                this.setState({ modalDeleteAccountShow: false });
+            }).catch(err => {
+                toast.warn('Error deleting account');
+                console.log(err);
+            });
+    }
+
+
     deletePeople = (item: Item) => {
         const idTeam = JSON.parse(localStorage.getItem("xTeam") || "{}").idTeam
         fetch(`/api/teams/${item.isMember ? 'member' : 'invitation'}`, {
@@ -309,29 +321,23 @@ class Teams extends React.Component<Props, State> {
                 idTeam: idTeam
             })
         }).then((response) => {
-            if (response.status == 200) {
+            if (response.status === 200) {
                 toast.info('The user has been successfully deleted');
             }
-           console.log(response)
         }).catch(err => {
             toast.warn(`Error: ${err.error ? err.error : 'Internal Server Error'}`);
         });
     }
 
-
-
-
-
-
-    renderTeamSettings = (): JSX.Element => {
+    renderTeamSettings  () {
         return <div>
-            <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={true} showSettingsButton={true} showFileButtons={false} />
+            <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={true} showSettingsButton={true} showFileButtons={false} isAdmin={true} isMember={false} />
             <div className="Teams">
                 <Container className="teams-box p-5">
                     <Form className="form-register" onSubmit={this.sendInvitation}>
 
                         <div className="teams-title">Manage your Team</div>
-                        <div className="teams-description py-3">Welcome to ''My team'' Drive account. Here you can add and remove team members.</div>
+                        <div className="teams-description py-3">Welcome to your Team Drive account. Here you can add and remove team members.</div>
                         <Container className="mail-container mt-4">
                             <div className="row">
                                 <div className="col-10 pl-0">
@@ -351,40 +357,45 @@ class Teams extends React.Component<Props, State> {
                                             <div className='col-11'><span>{item.user}</span></div>
                                             <div className='col-1'><span onClick={this.deletePeople.bind(this, item)}><i className="far fa-trash-alt"></i></span></div>
                                         </div>
-
-
                                     </ListGroup.Item>
                                 })}
-
-
                             </ListGroup>
                     </Container>
 
                 </Container>
+                <p className="deleteAccount" onClick={e => {
+                    this.setState({ modalDeleteAccountShow: true });
+                }}>Permanently Delete Account</p>
+
+                <Popup open={this.state.modalDeleteAccountShow} className="popup--full-screen">
+                    <div className="popup--full-screen__content delete-account-specific">
+                        <div className="popup--full-screen__close-button-wrapper">
+                            <img src={closeTab} onClick={e => {
+                                this.setState({ modalDeleteAccountShow: false });
+                            }} alt="Close tab" />
+                        </div>
+                        <div className="message-wrapper">
+                            <h1>Are you sure?</h1>
+                            <p className="delete-account-advertising">All your files will be gone forever and you will lose access to your Internxt Drive account. Any active subscriptions you might have will also be cancelled. Once you click delete account, you will receive a confirmation email.</p>
+                            <div className="buttons-wrapper">
+                                <div className="default-button button-primary delete-account-button"
+                                    onClick={this.handleCancelAccount}>
+                                    Delete account
+                                    </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </Popup>
+                
             </div>
         </div>
     }
 
-    renderActivation = (): JSX.Element => {
-        return (
-            <div className="activation">
-                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} />
-
-                <p className="logo"><img src={logo} alt="Logo" /></p>
-                <p className="container-title">Activation Team</p>
-                <p className="privacy-disclaimer">Please check your email and follow the instructions to activate your team so you can start using Internxt Drive Teams.</p>
-                <ul className="privacy-remainders" style={{ paddingTop: '20px' }}>By creating an account, you are agreeing to our Terms &amp; Conditions and Privacy Policy</ul>
-                <button className="btn-block on" onClick={() => {
-                    //this.resendEmail(this.state.register.email);
-                }}>Re-send activation email</button>
-            </div>);
-    }
-
-
     render() {
         return (
             <div>
-                {this.renderTeamSettings()}
+                {this.state.template()}
             </div>
         );
     }

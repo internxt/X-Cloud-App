@@ -58,6 +58,11 @@
         letter-spacing: -0.1px;
         font-size: 14px;
         line-height: 1.57;
+        max-height: 300px;
+        margin-bottom: 10px;
+        height: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .trash{

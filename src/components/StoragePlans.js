@@ -106,7 +106,6 @@ class StoragePlans extends React.Component {
             this.setState({ statusMessage: 'Redirecting to Stripe...' });
 
             stripe.redirectToCheckout({ sessionId: result.id }).then(result => {
-                console.log(result);
             }).catch(err => {
                 this.setState({ statusMessage: 'Failed to redirect to Stripe. Reason:' + err.message });
             });

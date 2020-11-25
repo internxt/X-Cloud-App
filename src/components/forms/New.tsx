@@ -9,7 +9,6 @@ import { isMobile, isAndroid, isIOS } from 'react-device-detect'
 import { getHeaders } from '../../lib/auth'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { KeyPairSyncResult } from "crypto";
 const openpgp = require('openpgp');
 const AesUtil = require('./AesUtil');
 
@@ -142,11 +141,9 @@ class New extends React.Component<NewProps, NewState> {
         
         //Datas
        const encPrivateKey = AesUtil.encrypt(privateKeyArmored,this.state.register.password,false);
-       const decKey = AesUtil.decrypt(encPrivateKey,this.state.register.password);
        const codpublicKey = Buffer.from(publicKeyArmored).toString('base64');;
        const codrevocationKey = Buffer.from(revocationCertificate).toString('base64');
   
-      
         fetch("/api/register", {
             method: "post",
             headers: getHeaders(true, true),

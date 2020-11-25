@@ -77,7 +77,6 @@ class Reset extends React.Component<ResetProps> {
             })
             .then(res => {
                 if (res.res.status !== 200) {
-                    console.log(res);
                     throw res.data.error;
                 } else {
                     alert("Password changed successfully.");
@@ -115,7 +114,7 @@ class Reset extends React.Component<ResetProps> {
 
     render() {
         return <div>
-            <NavigationBar navbarItems={<h5>Settings</h5>} isTeam={false}/>
+            <NavigationBar navbarItems={<h5>Settings</h5>} isTeam={false} isMember={false} isAdmin={false} />
             <Container className="login-main">
                 <Container className="login-container-box edit-password-box">
                     <div className="container-register">

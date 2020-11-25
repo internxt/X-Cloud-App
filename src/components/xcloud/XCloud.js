@@ -23,7 +23,9 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import axios from 'axios'
 
+
 import { analytics, getUuid } from '../../lib/analytics'
+
 
 class XCloud extends React.Component {
   constructor(props) {
@@ -46,6 +48,8 @@ class XCloud extends React.Component {
       searchFunction: null,
       popupShareOpened: false,
       showDeleteItemsPopup: false,
+      isAdmin: false,
+      isMember: false,
     };
 
     this.moveEvent = {};
@@ -77,7 +81,7 @@ class XCloud extends React.Component {
             }
 
             if (!data.activatedTeam) {
-              // TODO: Push Team component with activation template.
+              // All: Push Team component with activation template.
             }
 
             const team = JSON.parse(localStorage.getItem("xTeam"));
@@ -85,6 +89,8 @@ class XCloud extends React.Component {
               this.getTeamByUser().then((team) => {
                 localStorage.clear();
                 history.push('/login')
+                toast.info('Subscription has been completed please login ');
+
               }).catch((err) => { });
             }
 
@@ -114,19 +120,9 @@ class XCloud extends React.Component {
         if (response.status === 200) {
           response.json().then((body) => { 
             const xteam = localStorage.getItem("xTeam");
-            console.log(xteam)
             const xTeamJson = JSON.parse(xteam);
             xTeamJson.root_folder_id = body.userData.root_folder_id;
             localStorage.setItem('xTeam', JSON.stringify(xTeamJson));
-            console.log(xTeamJson)
- 
-
-
-
-            
-            //const root = body.userData.root_folder_id;
-            //xteam.root_folder_id = root; 
-            //localStorage.setItem('xTeam', JSON.stringify(xteam))
             resolve(body);
           });
         } else {
@@ -208,8 +204,10 @@ class XCloud extends React.Component {
       }).then(result => {
         if (result.admin === user.email) {
           result.rol = 'admin';
+          this.setState({ isAdmin: true, isMember:false });
         } else {
           result.rol = 'member';
+          this.setState({ isAdmin: false, isMember: true });
         }
         resolve(result);
       }).catch(err => {
@@ -588,7 +586,6 @@ class XCloud extends React.Component {
         },
         responseType: 'blob'
       }).then(res => {
-        console.log(res)
         if (res.status !== 200) {
           throw res
         }
@@ -898,26 +895,25 @@ class XCloud extends React.Component {
       if (!team) {
         history.push("/teams");
       } else if (team && !team.root_folder_id) {
-        console.log("NO EXISTE ROOT FOLDER")    // debug
         this.teamInitialization();
 
       } else {
-        console.log("CARGO TEAM WORKSPACE") // debug
         this.getFolderContent(team.root_folder_id);
         this.setState({
           currentFolderId: team.root_folder_id,
           isTeam: true,
-          namePath: []
+          namePath: [],
+          
         })
       }
     } else {
       const user = JSON.parse(localStorage.getItem("xUser"));
-      !user.root_folder_id ? this.userInitialization() : this.getFolderContent(user.root_folder_id);
-      console.log("CARGO WORKSPACE PERSONAL") // debug    
+      !user.root_folder_id ? this.userInitialization() : this.getFolderContent(user.root_folder_id);   
       this.setState({
         currentFolderId: user.root_folder_id,
         isTeam: false,
-        namePath: []
+        namePath: [],
+
       })
     }
   }

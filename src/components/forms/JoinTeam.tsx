@@ -3,13 +3,8 @@ import history from '../../lib/history';
 import { getHeaders } from '../../lib/auth';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { Container } from 'react-bootstrap';
 import './Login.scss';
 import './Reset.scss';
-import { Form, Col, Button } from 'react-bootstrap';
-import NavigationBar from './../navigationBar/NavigationBar';
-import { encryptText, decryptTextWithKey, decryptText, passToHash } from '../../lib/utils';
-import { getTeamMembersByUser } from '../../services/TeamMemberService';
 
 interface Props {
   match: any
