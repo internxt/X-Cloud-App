@@ -32,32 +32,27 @@ class Activation extends React.Component<ActivationProps & RouteProps, Activatio
   componentDidMount() {
     // Get token from path and activate account through api call
     const token = this.props.match.params.token;
-    fetch(`https://api.internxt.com/activations/${token}`, {
-      method: "GET",
-    }).then(response => {
-      if (response.status === 200) {
-        // Successfull activation
-        this.setState({ isActivated: true });
+    fetch(`/api/user/activations/${token}`)
+      .then(res => {
+        if (res.status === 200) {
+          // Successfull activation
+          this.setState({ isActivated: true });
+        } else {
+          // Wrong activation
+          this.setState({ isActivated: false });
+        }
 
-      } else {
-        // Wrong activation
+        if (!isMobile) {
+          this.redirect();
+        }
+      }).catch(err => {
         this.setState({ isActivated: false })
-      }
-
-      if (!isMobile) {
-        this.redirect();
-      }
-    }).catch(error => {
-      this.setState({ isActivated: false })
-      console.log('Activation error: ' + error);
-      if (!isMobile) {
-        this.redirect();
-      }
-    })
+        console.log('Activation error: ' + err);
+        if (!isMobile) { this.redirect(); }
+      })
   }
 
   redirect = () => {
-
     if (isMobile) {
       if (isAndroid) {
         window.location.href = "https://play.google.com/store/apps/details?id=com.internxt.cloud";
@@ -66,7 +61,7 @@ class Activation extends React.Component<ActivationProps & RouteProps, Activatio
       }
     } else {
       if (this.state.isActivated) {
-        toast.info('Your account has been activated successfully!', {className: 'xcloud-toast-info'})
+        toast.info('Your account has been activated successfully!', { className: 'xcloud-toast-info' })
       } else {
         toast.warn('Invalid activation code')
         toast.warn('Your activation code is invalid. Maybe you have used this link before and your account is already activated.')

@@ -113,12 +113,13 @@ class FileCommander extends React.Component {
   };
 
   getEventDatasetData = (item) => {
+    // FileCommanderItem data transfered on drag
     if (item.isfolder === 'true') {
       return {
         id: parseInt(item.cloudFileId),
         isFolder: true,
         type: 'folder',
-        name: item.name,
+        name: item.name
       };
     }
 
@@ -127,6 +128,7 @@ class FileCommander extends React.Component {
       isFolder: false,
       type: item.type,
       name: item.name,
+      isDraggable: !!item.isDraggable
     };
   };
 
@@ -441,13 +443,14 @@ class FileCommander extends React.Component {
                   color={item.color ? item.color : 'blue'}
                   clickHandler={
                     item.isFolder
-                      ? this.props.openFolder.bind(null, item)
-                      : this.props.downloadFile.bind(null, item.fileId)
+                      ? this.props.openFolder.bind(null, item.id)
+                      : (item.onClick ? item.onClick : this.props.downloadFile.bind(null, item.fileId))
                   
                   }
                   selectHandler={this.props.selectItems}
                   isLoading={!!item.isLoading}
                   isDownloading={!!item.isDownloading}
+                  isDraggable={item.isDraggable === false ? false : true}
                   move={this.props.move}
                   updateMeta={this.props.updateMeta}
                   hasParentFolder={!inRoot}

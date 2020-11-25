@@ -10,7 +10,7 @@ import iconPayPal from '../assets/PaymentBridges/paypal.svg'
 
 import { getHeaders } from '../lib/auth'
 
-const STRIPE_DEBUG = true;
+import { analytics, getUserData } from '../lib/analytics'
 
 const stripeGlobal = window.Stripe;
 
@@ -54,7 +54,7 @@ class StoragePlans extends React.Component {
     }
 
     loadAvailableProducts() {
-        fetch('/api/stripe/products' + (STRIPE_DEBUG ? '?test=true' : ''), {
+        fetch('/api/stripe/products' + (process.env.NODE_ENV !== 'production' ? '?test=true' : ''), {
             headers: getHeaders(true, false)
         }).then(response => response.json()).then(products => {
             this.setState({
@@ -66,9 +66,10 @@ class StoragePlans extends React.Component {
         });
     }
 
+
     loadAvailablePlans() {
         const body = { product: this.state.selectedProductToBuy.id }
-        if (STRIPE_DEBUG) { body.test = true }
+        if (process.env.NODE_ENV !== 'production') { body.test = true }
         fetch('/api/stripe/plans', {
             method: 'post',
             headers: getHeaders(true, false),
@@ -88,7 +89,7 @@ class StoragePlans extends React.Component {
     handleStripePayment() {
         this.setState({ statusMessage: 'Purchasing...' });
 
-        const stripe = new stripeGlobal(STRIPE_DEBUG ? process.env.REACT_APP_STRIPE_TEST_PK : process.env.REACT_APP_STRIPE_PK);
+        const stripe = new stripeGlobal(process.env.NODE_ENV !== 'production' ? process.env.REACT_APP_STRIPE_TEST_PK : process.env.REACT_APP_STRIPE_PK);
 
         const body = { plan: this.state.selectedPlanToBuy.id, product: this.state.selectedProductToBuy.id };
 
@@ -102,9 +103,8 @@ class StoragePlans extends React.Component {
             if (result.error) {
                 throw Error(result.error);
             }
-
+            analytics.track('user-enter-payments')
             this.setState({ statusMessage: 'Redirecting to Stripe...' });
-
             stripe.redirectToCheckout({ sessionId: result.id }).then(result => {
             }).catch(err => {
                 this.setState({ statusMessage: 'Failed to redirect to Stripe. Reason:' + err.message });
@@ -175,6 +175,13 @@ class StoragePlans extends React.Component {
                                 isChecked={false}
                                 header={'€' + fixedPrice}
                                 onClick={(e) => {
+                                    analytics.track('plan-subscription-selected', {
+                                        price: fixedPrice,
+                                        plan_type: entry.name,
+                                        payment_type: PaymentBridges[0].name,
+                                        plan_length: entry.interval_count,
+                                        email: getUserData().email
+                                    })
                                     this.setState({ selectedPlanToBuy: entry, storageStep: 4, paymentMethod: PaymentBridges[0].name });
                                 }}
                                 text={<span><span style={{ color: '#7e848c', fontWeight: 'normal' }}>Prepay{entry.interval_count === 1 ? ' per' : ''}</span>&nbsp;{entry.interval_count !== 1 ? entry.interval_count + ' ' : ''}month{entry.interval_count > 1 ? 's' : ''}</span>} />

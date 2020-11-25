@@ -18,12 +18,13 @@ import PrettySize from 'prettysize';
 
 import HeaderButton from './HeaderButton';
 
-import { analytics, getUserData, getUuid } from '../../lib/analytics'
+import { analytics, getUserData } from '../../lib/analytics'
 
 import "./NavigationBar.scss";
 import history from '../../lib/history';
 
-import { getHeaders } from '../../lib/auth';
+import { getHeaders } from '../../lib/auth'
+import { clearLocalStorage } from '../../lib/localStorageUtils';
 
 interface NavigationBarProps {
     navbarItems: JSX.Element
@@ -172,6 +173,13 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         } else {
             history.push("/teams");
         }
+        ).then(res => {
+            return res.json();
+        }).then(res2 => {
+            this.setState({ barUsage: res2.total })
+        }).catch(err => {
+            console.log('Error on fetch usage', err);
+        });
     }
 
 
@@ -260,11 +268,10 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                             <Dropdown.Divider />
                             <div className="dropdown-menu-group">
                                 <Dropdown.Item onClick={(e) => {
-                                    analytics.track('signout', {
-                                        userId: getUuid(),
+                                    analytics.track('user-signout', {
                                         email: getUserData().email
                                     })
-                                    localStorage.clear();
+                                    clearLocalStorage();
                                     history.push('/login');
                                 }}>Sign out</Dropdown.Item>
                             </div>

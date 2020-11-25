@@ -23,8 +23,8 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import axios from 'axios'
 
-
-import { analytics, getUuid } from '../../lib/analytics'
+import { analytics, getUserData, getUuid } from '../../lib/analytics'
+import { clearLocalStorage } from '../../lib/localStorageUtils';
 
 
 class XCloud extends React.Component {
@@ -99,7 +99,7 @@ class XCloud extends React.Component {
         })
         .catch((error) => {
           console.log('Error getting user activation status: ' + error);
-          localStorage.clear();
+          clearLocalStorage();
           history.push('/login');
         });
     }
@@ -247,14 +247,17 @@ class XCloud extends React.Component {
           folderName,
           teamId: _.last(this.state.namePath) && _.last(this.state.namePath).hasOwnProperty('id_team') ? _.last(this.state.namePath).id_team : null
         }),
-      }).then(async (res) => {
-        if (res.status !== 201) {
-          const body = await res.json();
-          throw body.error ? body.error : 'createFolder error';
-        }
-        analytics.track({
-          userId: getUuid(),
-          event: 'folder-created'
+      })
+        .then(async (res) => {
+          if (res.status !== 201) {
+            const body = await res.json();
+            throw body.error ? body.error : 'createFolder error';
+          }
+          analytics.track('folder-created', {
+            email: getUserData().email,
+            platform: 'web'
+          })
+          this.getFolderContent(this.state.currentFolderId, false);
         })
         this.getFolderContent(this.state.currentFolderId, false);
       }).catch((err) => {
@@ -374,9 +377,14 @@ class XCloud extends React.Component {
   };
 
   getFolderContent = (rootId, updateNamePath = true, isTeam = false) => {
-    var route = `/api/storage/folder/${rootId}`;
+    let welcomeFile = await fetch('/api/welcome', {
+      method: 'get',
+      headers: getHeaders(true, false)
+    }).then(res => res.json())
+      .then(body => body.file_exists)
+      .catch(() => false)
+    fetch(`/api/storage/folder/${rootId}`, {
 
-    fetch(route, {
       method: 'get',
       headers: getHeaders(true, true, isTeam),
     })
@@ -384,10 +392,6 @@ class XCloud extends React.Component {
         if (res.status !== 200) {
           throw res;
         } else {
-          analytics.track({
-            userId: getUuid(),
-            event: 'folder-opened'
-          })
           return res.json();
         }
       })
@@ -411,6 +415,34 @@ class XCloud extends React.Component {
           newCommanderFolders.sort(this.state.sortFunction);
           newCommanderFiles.sort(this.state.sortFunction);
         }
+
+        if (!data.parentId && welcomeFile) {
+          newCommanderFiles = _.concat([{
+            id: 0,
+            file_id: '0',
+            fileId: '0',
+            name: 'Welcome',
+            type: 'pdf',
+            size: 0,
+            isDraggable: false,
+            onClick: async () => {
+              analytics.track('file-welcome-open');
+              fetch('/Internxt.pdf').then(res => res.blob()).then(obj => {
+                fileDownload(obj, 'Welcome.pdf')
+              })
+            },
+            onDelete: async () => {
+              analytics.track('file-welcome-delete');
+              return fetch('/api/welcome', {
+                method: 'delete',
+                headers: getHeaders(true, false)
+              }).catch(err => {
+                console.error('Cannot delete welcome file, reason: %s', err.message)
+              })
+            }
+          }], newCommanderFiles)
+        }
+
         this.setState({
           currentCommanderItems: _.concat(newCommanderFolders, newCommanderFiles),
           currentFolderId: data.id,
@@ -452,9 +484,10 @@ class XCloud extends React.Component {
         body: data,
       })
         .then(() => {
-          analytics.track({
-            userId: getUuid(),
-            event: 'folder-rename'
+          analytics.track('folder-rename', {
+            email: getUserData().email,
+            fileId: itemId,
+            platform: 'web'
           })
           this.getFolderContent(this.state.currentFolderId);
         })
@@ -468,9 +501,10 @@ class XCloud extends React.Component {
         body: data,
       })
         .then(() => {
-          analytics.track({
-            userId: getUuid(),
-            event: 'file-rename'
+          analytics.track('file-rename', {
+            file_id: itemId,
+            email: getUserData().email,
+            platform: 'web'
           })
           this.getFolderContent(this.state.currentFolderId);
         })
@@ -536,9 +570,10 @@ class XCloud extends React.Component {
         if (!success) {
           toast.warn(`Error moving ${keyOp.toLowerCase()} '${response.item.name}`);
         } else {
-          analytics.track({
-            event: `${keyOp}-move`,
-            userId: getUuid()
+          analytics.track(`${keyOp}-move`, {
+            file_id: response.item.id,
+            email: getUserData().email,
+            platform: 'web'
           })
           // Remove myself
           let currentCommanderItems = this.state.currentCommanderItems.filter((commanderItem) =>
@@ -572,9 +607,14 @@ class XCloud extends React.Component {
         })
         return config
       })
-      analytics.track({
-        userId: getUuid(),
-        event: 'file-download-start'
+      analytics.track('file-download-start', {
+        file_id: pcb.props.rawItem.id,
+        file_name: pcb.props.rawItem.name,
+        file_size: pcb.props.rawItem.size,
+        file_type: pcb.props.type,
+        email: getUserData().email,
+        folder_id: pcb.props.rawItem.folder_id,
+        platform: 'web'
       })
       axios.get(`/api/storage/file/${id}`, {
         onDownloadProgress(pe) {
@@ -589,9 +629,12 @@ class XCloud extends React.Component {
         if (res.status !== 200) {
           throw res
         }
-        analytics.track({
-          userId: getUuid(),
-          event: 'file-download-finished'
+
+        analytics.track('file-download-finished', {
+          file_id: id,
+          email: getUserData().email,
+          file_size: res.data.size,
+          platform: 'web'
         })
         return { blob: res.data, filename: Buffer.from(res.headers['x-file-name'], 'base64').toString('utf8') }
       }).then(({ blob, filename }) => {
@@ -599,6 +642,12 @@ class XCloud extends React.Component {
         pcb.setState({ progress: 0 })
         resolve()
       }).catch(err => {
+        analytics.track('file-download-error', {
+          file_id: id,
+          email: getUserData().email,
+          msg: err.message,
+          platform: 'web'
+        });
         if (err.response && err.response.status === 401) {
           return history.push('/login')
         } else {
@@ -641,11 +690,14 @@ class XCloud extends React.Component {
         return reject(Error('No folder ID provided'));
       }
 
-      console.log('Upload file:', file.name);
-      analytics.track({
-        userId: getUuid(),
-        event: 'file-upload-start'
+      analytics.track('file-upload-start', {
+        file_size: file.size,
+        file_type: file.type,
+        folder_id: parentFolderId,
+        email: getUserData().email,
+        platform: 'web'
       })
+
       const uploadUrl = `/api/storage/folder/${parentFolderId}/upload`;
 
       // Headers with Auth & Mnemonic
@@ -666,13 +718,17 @@ class XCloud extends React.Component {
           try {
             data = await res.json();
           } catch (err) {
+            console.log(err)
+            analytics.track('file-upload-error', {
+              file_size: file.size,
+              file_type: file.type,
+              email: getUserData().email,
+              msg: err.message,
+              platform: 'web'
+            })
             console.error('Upload response data is not a JSON', err);
           }
           if (data) {
-            analytics.track({
-              userId: getUuid(),
-              event: 'file-upload-finished'
-            })
             return { res: res, data: data };
           } else {
             throw res;
@@ -696,7 +752,7 @@ class XCloud extends React.Component {
         arr.splice(i, 1);
         files = arr;
         toast.warn(
-          `File too large.\nYou can only upload or download files of up to 200 MB through the web app`,
+          `File too large.\nYou can only upload or download files of up to 300 MB through the web app`,
         );
       }
     }
@@ -750,6 +806,8 @@ class XCloud extends React.Component {
               );
               __currentCommanderItems.splice(index, 1);
               this.setState({ currentCommanderItems: __currentCommanderItems }, () => next(err));
+            }).finally(() => {
+              this.getFolderContent(this.state.currentFolderId)
             });
         },
         (err, results) => {
@@ -797,16 +855,20 @@ class XCloud extends React.Component {
       method: 'DELETE',
       headers: getHeaders(true, false,this.state.isTeam),
     };
+
     if (selectedItems.length === 0) return;
     const deletionRequests = _.map(selectedItems, (v, i) => {
+      if (v.onDelete) {
+        return (next) => { v.onDelete(); next() }
+      }
       const url = v.isFolder
         ? `/api/storage/folder/${v.id}`
         : `/api/storage/folder/${v.folderId}/file/${v.id}`;
       return (next) =>
         fetch(url, fetchOptions).then(() => {
-          analytics.track({
-            event: (v.isFolder ? 'folder' : 'file') + '-delete',
-            userId: getUuid()
+          analytics.track((v.isFolder ? 'folder' : 'file') + '-delete', {
+            email: getUserData().email,
+            platform: 'web'
           })
           next()
         }).catch(next);

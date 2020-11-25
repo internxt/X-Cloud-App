@@ -11,14 +11,17 @@ declare namespace NodeJS {
         REACT_APP_PROXY_URL: string
         REACT_APP_API_URL: string
         REACT_APP_SEGMENT_KEY: string
+        REACT_APP_SEGMENT_DEBUG: string
     }
 }
 
 interface SegmentAnalytics {
-    
+    identify: any
+    track: (eventName: string, params?: any) => void
+    page: (pageName: string) => void
 }
 
 interface Window {
     Stripe: any
-    analytics: any
+    analytics: SegmentAnalytics
 }

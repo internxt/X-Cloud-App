@@ -9,6 +9,7 @@ import { isMobile, isAndroid, isIOS } from 'react-device-detect'
 import { getHeaders } from '../../lib/auth'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { analytics } from "../../lib/analytics";
 const openpgp = require('openpgp');
 const AesUtil = require('./AesUtil');
 
@@ -163,8 +164,11 @@ class New extends React.Component<NewProps, NewState> {
             if (response.status === 200) {
                 response.json().then((body) => {
                     // Manage succesfull register
-                    const { token, user } = body;
+                    const { token, user, uuid } = body;
                     localStorage.setItem('xToken', token);
+
+                    analytics.identify(uuid, { email: this.state.register.email });
+
                     // Clear form fields
                     this.setState({
                         register: {
@@ -189,11 +193,10 @@ class New extends React.Component<NewProps, NewState> {
                     this.setState({ validated: false });
                 })
             }
-        })
-            .catch(err => {
-                console.error("Register error", err);
-                console.log('Register error');
-            });
+        }).catch(err => {
+            console.error("Register error", err);
+            console.log('Register error');
+        });
 
     }
 

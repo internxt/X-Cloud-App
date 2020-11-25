@@ -9,6 +9,7 @@ import SanitizeFilename from 'sanitize-filename';
 import TimeAgo from 'react-timeago';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { analytics } from '../../lib/analytics';
 
 class FileCommanderItem extends React.Component {
   constructor(props, state) {
@@ -103,10 +104,16 @@ class FileCommanderItem extends React.Component {
   };
 
   handleColorSelection = (value, event) => {
+    analytics.track('folder-color-selection', {
+      value: value
+    })
     this.setState({ selectedColor: value });
   };
 
   handleIconSelection = (value, event) => {
+    analytics.track('folder-icon-selection', {
+      value: value
+    })
     this.setState({ selectedIcon: value });
   };
 
@@ -232,7 +239,7 @@ class FileCommanderItem extends React.Component {
           <span className="extension">
             {!this.state.isLoading && !this.state.isDownloading ? this.props.type : ''}
           </span>
-          {this.state.progress > 0 ? <ProgressBar className="download-pb" now={this.state.progress} /> : '' }
+          {this.state.progress > 0 ? <ProgressBar className="download-pb" now={this.state.progress} /> : ''}
         </div>
         {this.state.isLoading || this.state.isDownloading ? <ActivityIndicator /> : ''}
       </div>
@@ -275,13 +282,21 @@ class FileCommanderItem extends React.Component {
         data-bridge-bucket-id={this.props.rawItem.bucket}
         data-name={this.props.rawItem.name}
         data-isfolder={!!this.props.rawItem.isFolder}
-        onClick={() => this.props.selectHandler(this.props.id, this.props.isFolder, false)}
+        onClick={() => {
+          this.props.selectHandler(this.props.id, this.props.isFolder, false)
+        }}
         onDoubleClick={(e) => {
           if (e.target.className.includes('FileCommanderItem')) {
+            if (this.props.type == null) {
+              analytics.track('folder-opened', {
+                folder_name: this.state.itemName,
+                folder_id: this.props.id
+              });
+            }
             this.itemClickHandler(e);
           }
         }}
-        draggable={true}
+        draggable={this.props.isDraggable}
         onDragStart={(e) => this.props.handleDragStart(e)}
         onDragOver={this.handleDragOver}
         onDragLeave={this.handleDragLeave}
@@ -354,42 +369,42 @@ class FileCommanderItem extends React.Component {
               </Dropdown.Menu>
             </Dropdown>
           ) : (
-            <Dropdown
-              drop={'right'}
-              show={this.state.showDropdown}
-              onToggle={this.handleDropdownSelect}
-            >
-              <Dropdown.Toggle as={CustomToggle} handleShowDropdown={this.handleShowDropdown}>
-                ...
+              <Dropdown
+                drop={'right'}
+                show={this.state.showDropdown}
+                onToggle={this.handleDropdownSelect}
+              >
+                <Dropdown.Toggle as={CustomToggle} handleShowDropdown={this.handleShowDropdown}>
+                  ...
               </Dropdown.Toggle>
-              <Dropdown.Menu>
-                <Dropdown.Item as="span">
-                  <input
-                    className="itemNameInput"
-                    type="text"
-                    value={this.state.itemName}
-                    onChange={this.handleNameChange}
-                  />
-                </Dropdown.Item>
-                <Dropdown.Divider />
-                <Dropdown.Item as="span">
-                  <div>
-                    <span className="propText">Type: </span>
-                    <span className="propValue">
-                      {this.props.type ? this.props.type.toUpperCase() : ''}
-                    </span>
-                  </div>
-                </Dropdown.Item>
-                <Dropdown.Item as="span">
-                  <div>
-                    <span className="propText">Size: </span>
-                    <span className="propValue">{PrettySize(this.props.size)}</span>
-                  </div>
-                </Dropdown.Item>
-                {/* <Dropdown.Item eventKey="4" as="span"><span className="propText">Added: </span></Dropdown.Item> */}
-              </Dropdown.Menu>
-            </Dropdown>
-          )}
+                <Dropdown.Menu>
+                  <Dropdown.Item as="span">
+                    <input
+                      className="itemNameInput"
+                      type="text"
+                      value={this.state.itemName}
+                      onChange={this.handleNameChange}
+                    />
+                  </Dropdown.Item>
+                  <Dropdown.Divider />
+                  <Dropdown.Item as="span">
+                    <div>
+                      <span className="propText">Type: </span>
+                      <span className="propValue">
+                        {this.props.type ? this.props.type.toUpperCase() : ''}
+                      </span>
+                    </div>
+                  </Dropdown.Item>
+                  <Dropdown.Item as="span">
+                    <div>
+                      <span className="propText">Size: </span>
+                      <span className="propValue">{PrettySize(this.props.size)}</span>
+                    </div>
+                  </Dropdown.Item>
+                  {/* <Dropdown.Item eventKey="4" as="span"><span className="propText">Added: </span></Dropdown.Item> */}
+                </Dropdown.Menu>
+              </Dropdown>
+            )}
         </div>
         <div className="itemIcon">
           {this.props.isFolder ? this.getFolderIcon() : this.getFileIcon()}
@@ -400,7 +415,7 @@ class FileCommanderItem extends React.Component {
         <div className="created">
           {this.props.created && !this.props.isFolder ? <TimeAgo date={this.props.created} /> : ''}
         </div>
-      </div>
+      </div >
     );
   }
 }

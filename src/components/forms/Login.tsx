@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Button, Form, Col, Container } from "react-bootstrap";
+import { Button, Form, Col, Container, Spinner } from "react-bootstrap";
 
 import history from '../../lib/history';
 import "./Login.scss";
@@ -11,6 +11,7 @@ import { isMobile, isAndroid, isIOS } from 'react-device-detect'
 import { getHeaders } from '../../lib/auth'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { analytics } from '../../lib/analytics'
 
 import { analytics } from '../../lib/analytics';
 const AesUtil = require('./AesUtil');
@@ -32,7 +33,8 @@ class Login extends React.Component<LoginProps> {
     token: "",
     user: {},
     showTwoFactor: false,
-    twoFactorCode: ''
+    twoFactorCode: '',
+    isLogingIn: false
   }
 
   componentDidMount() {
@@ -105,6 +107,10 @@ class Login extends React.Component<LoginProps> {
       const data = await res.json();
 
       if (res.status !== 200) {
+        analytics.track('user-signin-attempted', {
+          status: 'error',
+          msg: data.error ? data.error : 'Login error',
+        })
         throw new Error(data.error ? data.error : 'Login error');
       }
 
@@ -120,6 +126,11 @@ class Login extends React.Component<LoginProps> {
       if (err.message.includes('not activated') && this.validateEmail(this.state.email)) {
         history.push(`/activate/${this.state.email}`);
       } else {
+        this.setState({ isLogingIn: false })
+        analytics.track('user-signin-attempted', {
+          status: 'error',
+          msg: err.message,
+        })
         toast.warn(`"${err}"`);
       }
     });
@@ -147,6 +158,9 @@ class Login extends React.Component<LoginProps> {
       headers: getHeaders(true, false),
       body: JSON.stringify({ email: this.state.email })
     }).then(response => {
+      if (response.status !== 200) {
+        this.setState({ isLogingIn: false })
+      }
       if (response.status === 200) {
         // Manage credentials verification
         response.json().then(async (body) => {
@@ -206,10 +220,21 @@ class Login extends React.Component<LoginProps> {
             localStorage.setItem('xKeyPublic', ArmoredPublicKey);
 
             if (res.res.status !== 200) {
+              analytics.track('user-signin-attempted', {
+                status: 'error',
+                msg: res.data.error ? res.data.error : 'Login error',
+              });
               throw new Error(res.data.error ? res.data.error : res.data);
             }
 
             var data = res.data;
+            analytics.identify(data.user.uuid, {
+              email: this.state.email,
+              platform: 'web',
+              referrals_credit: data.user.credit,
+              referrals_count: Math.floor(data.user.credit / 5),
+              createdAt: data.user.createdAt
+            })
             // Manage succesfull login
             const user = {
               userId: data.user.userId,
@@ -220,11 +245,12 @@ class Login extends React.Component<LoginProps> {
               name: data.user.name,
               lastname: data.user.lastname,
               uuid: data.user.uuid,
-              credit: data.user.credit,
               privateKey: privkeyDecrypted,
               publicKey: ArmoredPublicKey,
               revocationKey: ArmoredRevocateKey
 
+              credit: data.user.credit,
+              createdAt: data.user.createdAt
             };
 
             localStorage.setItem('xToken', data.token);
@@ -290,6 +316,7 @@ class Login extends React.Component<LoginProps> {
         toast.warn("This account doesn't exists");
       }
     }).catch(err => {
+      this.setState({ isLogingIn: false })
       console.error("Login error. " + err)
       toast.warn('Login error')
     });
@@ -311,7 +338,9 @@ class Login extends React.Component<LoginProps> {
             </div>
             <Form className="form-register" onSubmit={(e: any) => {
               e.preventDefault();
-              this.check2FANeeded();
+              this.setState({ isLogingIn: true }, () => {
+                this.check2FANeeded();
+              });
             }}>
               <Form.Row>
                 <Form.Group as={Col} controlId="email">
@@ -325,7 +354,7 @@ class Login extends React.Component<LoginProps> {
               </Form.Row>
               <Form.Row className="form-register-submit">
                 <Form.Group as={Col}>
-                  <Button className="on btn-block __btn-new-button" disabled={!isValid} type="submit">Sign in</Button>
+                  <Button className="on btn-block __btn-new-button" disabled={!isValid || this.state.isLogingIn} type="submit">{this.state.isLogingIn ? <Spinner animation="border" variant="light" style={{ fontSize: 1, width: '1rem', height: '1rem' }} /> : 'Sign in'}</Button>
                 </Form.Group>
               </Form.Row>
             </Form>
@@ -336,6 +365,7 @@ class Login extends React.Component<LoginProps> {
 
         <Container className="login-container-box-forgot-password">
           <p className="forgotPassword" onClick={(e: any) => {
+            analytics.track('user-reset-password-request');
             history.push('/remove');
           }}
           >Forgot your password?</p>

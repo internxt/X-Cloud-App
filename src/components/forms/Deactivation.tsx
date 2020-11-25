@@ -5,6 +5,7 @@ import history from '../../lib/history';
 import { isMobile } from 'react-device-detect'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { clearLocalStorage } from "../../lib/localStorageUtils";
 
 interface DeactivationProps {
     match: any
@@ -23,7 +24,7 @@ class Deactivation extends React.Component<DeactivationProps> {
 
     ClearAndRedirect = () => {
         console.log('Clear and redirect')
-        localStorage.clear();
+        clearLocalStorage();
 
         if (!isMobile) {
             toast.info('Your account has been deactivated');
@@ -71,10 +72,8 @@ class Deactivation extends React.Component<DeactivationProps> {
             return "";
         } else {
             return <Container>
-                        <Alert variant="danger">
-                            {this.state.result}
-                        </Alert>
-                   </Container>;
+                <Alert variant="danger">{this.state.result}</Alert>
+            </Container>;
         }
     }
 

@@ -11,7 +11,8 @@ import { getHeaders } from '../lib/auth'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-import { analytics, getUuid } from '../lib/analytics'
+import { analytics } from '../lib/analytics'
+import { clearTimeout, setTimeout } from 'timers';
 
 interface PopupShareProps {
     onClose: any
@@ -60,9 +61,30 @@ class PopupShare extends React.Component<PopupShareProps> {
     }
 
     componentDidMount() {
-        let fileId = this.props.item.isFolder ? this.props.item.id : this.props.item.fileId;
+        this.handleShareLink(1)
+    }
 
-        this.generateShareLink(fileId, 1).then(link => {
+    timeout: NodeJS.Timeout = setTimeout(() => { }, 0);
+    handleChange(e) {
+        const views = e.currentTarget.value
+        clearTimeout(this.timeout)
+        this.timeout = setTimeout(() => {
+            this.handleShareLink(parseInt(views));
+        }, 750)
+    }
+
+    handleShareLink(views: Number) {
+        let fileId = this.props.item.isFolder ? this.props.item.id : this.props.item.fileId;
+        if (!this.props.item.isFolder && this.props.item.isDraggable === false) {
+            return this.setState({
+                link: 'https://internxt.com/Internxt.pdf'
+            })
+        }
+
+        this.generateShareLink(
+            fileId, views
+        ).then(link => {
+            analytics.track('file-share')
             this.setState({ link: link });
         }).catch((err) => {
             if (err.status === 402) {
@@ -99,39 +121,20 @@ class PopupShare extends React.Component<PopupShareProps> {
                     <div>
                         Share your Drive {this.props.item.isFolder ? 'folder' : 'file'} with this private link. Or enter
                         the number of times you'd like the link to be valid:&nbsp;&nbsp;
-                        <input type="text" defaultValue={this.state.views} size={2} style={{
-                            display: 'inline',
-                            border: 'none',
-                            color: '#5c6066',
-                            backgroundColor: '#f8f9fa',
-                            textAlign: 'center',
-                            borderRadius: '3.9px'
-                        }} onKeyUp={(e: React.FormEvent<HTMLInputElement>) => {
-                            if (/^[1-9][0-9]?$/.test(e.currentTarget.value)) {
-                                let fileId = this.props.item.isFolder ? this.props.item.id : this.props.item.fileId;
-
-                                this.generateShareLink(
-                                    fileId,
-                                    parseInt(e.currentTarget.value)
-                                ).then(link => {
-                                    analytics.track({
-                                        event: 'file-share',
-                                        userId: getUuid()
-                                    })        
-                                    this.setState({ link: link });
-                                }).catch((err) => {
-                                    if (err.status === 402) {
-                                        let itemType = this.props.item.isFolder ? 'older' : 'ile';
-                                        this.setState({ link: 'Unavailable link' });
-                                        toast.warn(`F${itemType} too large.\nYou can only share f${itemType}s of up to 200 MB through the web app`);
-                                    }
-                                });
-                            } else {
-                                if (e.currentTarget.value !== "") {
-                                    e.currentTarget.value = "1";
-                                }
-                            }
-                        }}>
+                        <input type="number" defaultValue={this.state.views} size={3}
+                            step="1"
+                            min="1"
+                            onChange={this.handleChange.bind(this)}
+                            style={{
+                                width: '50px',
+                                display: 'inline',
+                                border: 'none',
+                                color: '#5c6066',
+                                backgroundColor: '#f8f9fa',
+                                textAlign: 'center',
+                                borderRadius: '3.9px',
+                                appearance: 'textfield'
+                            }}>
                         </input>
                     </div>
                 </div>

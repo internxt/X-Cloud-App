@@ -7,6 +7,7 @@ import { Router } from 'react-router-dom'
 import history from './lib/history'
 import 'bootstrap/dist/css/bootstrap.css';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import { clearLocalStorage } from './lib/localStorageUtils';
 
 
 ReactDOM.render(<Router history={history}><App /></Router>, document.getElementById('root'));
@@ -15,10 +16,10 @@ ReactDOM.render(<Router history={history}><App /></Router>, document.getElementB
 // unregister() to register() below. Note this comes with some pitfalls.
 // Learn more about service workers: https://bit.ly/CRA-PWA
 if (window.location.hostname === 'cloud.internxt.com') {
-    localStorage.clear();
+    clearLocalStorage();
     window.location.href = 'https://drive.internxt.com/app'
     serviceWorker.unregister();
 }
 else {
-    serviceWorker.register();
+    serviceWorker.unregister();
 }
