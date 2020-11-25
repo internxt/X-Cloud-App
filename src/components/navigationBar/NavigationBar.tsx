@@ -164,25 +164,6 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         }
     }
 
-
-    handleTeamSection() {
-        const team = JSON.parse(localStorage.xTeam || "{}");
-        const user = JSON.parse(localStorage.xUser);
-        if (team && team.admin === user.email) {
-            history.push("/teams/password");
-        } else {
-            history.push("/teams");
-        }
-        ).then(res => {
-            return res.json();
-        }).then(res2 => {
-            this.setState({ barUsage: res2.total })
-        }).catch(err => {
-            console.log('Error on fetch usage', err);
-        });
-    }
-
-
     render() {
         let user: any = null;
         try {

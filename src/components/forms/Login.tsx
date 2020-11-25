@@ -11,8 +11,6 @@ import { isMobile, isAndroid, isIOS } from 'react-device-detect'
 import { getHeaders } from '../../lib/auth'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { analytics } from '../../lib/analytics'
-
 import { analytics } from '../../lib/analytics';
 const AesUtil = require('./AesUtil');
 const openpgp = require('openpgp');
@@ -44,6 +42,16 @@ class Login extends React.Component<LoginProps> {
       } else if (isIOS) {
         window.location.href = "https://itunes.apple.com/us/app/x-cloud-secure-file-storage/id1465869889";
       }
+
+
+      // Check if recent login is passed and redirect user to Internxt Drive
+      const mnemonic = localStorage.getItem('xMnemonic');
+      const user = JSON.parse(localStorage.getItem('xUser') || '{}');
+
+      if (user && mnemonic && this.props.handleKeySaved) {
+        this.props.handleKeySaved(user)
+        history.push('/app')
+      }
     }
 
     // Check if recent login is passed and redirect user to Internxt Drive
@@ -51,6 +59,7 @@ class Login extends React.Component<LoginProps> {
     const user = JSON.parse(localStorage.getItem('xUser') || '{}');
     const xKeys = localStorage.getItem('xKeys');
     const xKeyPublic = localStorage.getItem('xKeyPublic');
+
 
     if (user && mnemonic && xKeys && xKeyPublic && this.props.handleKeySaved) {
       this.props.handleKeySaved(user)
@@ -61,7 +70,6 @@ class Login extends React.Component<LoginProps> {
   componentDidUpdate() {
     if (this.state.isAuthenticated && this.state.token && this.state.user) {
       const mnemonic = localStorage.getItem('xMnemonic');
-    
 
       if (mnemonic) {
         history.push('/app')
@@ -137,21 +145,6 @@ class Login extends React.Component<LoginProps> {
   }
 
   doLogin = async () => {
-
-    /*
-    //Generate keys
-    const { privateKeyArmored, publicKeyArmored, revocationCertificate } = await openpgp.generateKey({
-      userIds: [{ email: 'inxt@inxt.com' }], // you can pass multiple user IDs
-      curve: 'ed25519',                                           // ECC curve name       // protects the private key
-    });
-
-    const encPrivateKey = AesUtil.encrypt(privateKeyArmored, this.state.password, false);
-
-    const codpublicKey = Buffer.from(publicKeyArmored).toString('base64');
-    const codrevocateKey = Buffer.from(revocationCertificate).toString('base64');
-    const decKey = AesUtil.decrypt(encPrivateKey, this.state.password);
-    const codprivateKey = Buffer.from(privateKeyArmored).toString('base64');
-*/
     // Proceed with submit
     fetch("/api/login", {
       method: "post",
@@ -174,17 +167,17 @@ class Login extends React.Component<LoginProps> {
             const encPrivateKey = AesUtil.encrypt(privateKeyArmored, this.state.password, false);
             const base64publicKey = Buffer.from(publicKeyArmored).toString('base64');
             const base64revocationKey = Buffer.from(revocationCertificate).toString('base64');
-            
-            
+
+
             fetch('/api/user/generateKey', {
               method: 'post',
               headers: getHeaders(true, false),
-              body: JSON.stringify({ 
+              body: JSON.stringify({
                 email: this.state.email,
-                publicKey:base64publicKey,
-                privateKey:encPrivateKey,
-                revocationKey:base64revocationKey
-               })
+                publicKey: base64publicKey,
+                privateKey: encPrivateKey,
+                revocationKey: base64revocationKey
+              })
             }).then(result => result.json()).then(async result => {
               return { result, data: await result.json() };
             }).catch(err => {
@@ -195,7 +188,7 @@ class Login extends React.Component<LoginProps> {
           const salt = decryptText(body.sKey);
           const hashObj = passToHash({ password: this.state.password, salt });
           const encPass = encryptText(hashObj.hash);
-          
+
 
           fetch("/api/access", {
             method: "post",
@@ -208,6 +201,15 @@ class Login extends React.Component<LoginProps> {
           }).then(async res => {
             return { res, data: await res.json() };
           }).then(async res => {
+
+            if (res.res.status !== 200) {
+              analytics.track('user-signin-attempted', {
+                status: 'error',
+                msg: res.data.error ? res.data.error : 'Login error',
+              });
+              throw new Error(res.data.error ? res.data.error : res.data);
+            }
+
             const publicKey = res.data.user.publicKey;
             const privateKey = res.data.user.privateKey;
             const revocationKey = res.data.user.revocationKey;
@@ -219,13 +221,6 @@ class Login extends React.Component<LoginProps> {
             localStorage.setItem('xKeys', privkeyDecrypted);
             localStorage.setItem('xKeyPublic', ArmoredPublicKey);
 
-            if (res.res.status !== 200) {
-              analytics.track('user-signin-attempted', {
-                status: 'error',
-                msg: res.data.error ? res.data.error : 'Login error',
-              });
-              throw new Error(res.data.error ? res.data.error : res.data);
-            }
 
             var data = res.data;
             analytics.identify(data.user.uuid, {
@@ -247,22 +242,18 @@ class Login extends React.Component<LoginProps> {
               uuid: data.user.uuid,
               privateKey: privkeyDecrypted,
               publicKey: ArmoredPublicKey,
-              revocationKey: ArmoredRevocateKey
-
+              revocationKey: ArmoredRevocateKey,
               credit: data.user.credit,
               createdAt: data.user.createdAt
             };
 
+            if (this.props.handleKeySaved) {
+              this.props.handleKeySaved(user)
+            }
+
             localStorage.setItem('xToken', data.token);
             localStorage.setItem('xMnemonic', user.mnemonic);
             localStorage.setItem('xUser', JSON.stringify(user));
-
-
-            if (this.props.handleKeySaved) {
-              //this.props.handleKeySaved(user)
-            }
-
-            
 
             if (data.userTeam && data.userTeam.isActivated) {
               //Datas
@@ -296,16 +287,12 @@ class Login extends React.Component<LoginProps> {
               isTeam: false
             });
 
-            analytics.identify(data.user.uuid, {
-              event: 'user-signup',
-              email: data.user.email
-            })
           }).catch(err => {
-            toast.warn(`"${err.error ? err.error : err}"`);
-          });
+              toast.warn(`"${err.error ? err.error : err}"`);
+              this.setState({ isLogingIn: false })
+            });
         });
       } else if (response.status === 400) {
-
         // Manage other cases:
         // username / password do not match, user activation required...
         response.json().then((body) => {

@@ -23,7 +23,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import axios from 'axios'
 
-import { analytics, getUserData, getUuid } from '../../lib/analytics'
+import { analytics, getUserData} from '../../lib/analytics'
 import { clearLocalStorage } from '../../lib/localStorageUtils';
 
 
@@ -118,7 +118,7 @@ class XCloud extends React.Component {
         }),
       }).then((response) => {
         if (response.status === 200) {
-          response.json().then((body) => { 
+          response.json().then((body) => {
             const xteam = localStorage.getItem("xTeam");
             const xTeamJson = JSON.parse(xteam);
             xTeamJson.root_folder_id = body.userData.root_folder_id;
@@ -129,8 +129,8 @@ class XCloud extends React.Component {
           reject(null);
         }
       }).then(Folder => {
-      
-      
+
+
       }).catch((error) => {
         console.log(error)
         reject(error);
@@ -204,7 +204,7 @@ class XCloud extends React.Component {
       }).then(result => {
         if (result.admin === user.email) {
           result.rol = 'admin';
-          this.setState({ isAdmin: true, isMember:false });
+          this.setState({ isAdmin: true, isMember: false });
         } else {
           result.rol = 'member';
           this.setState({ isAdmin: false, isMember: true });
@@ -241,7 +241,7 @@ class XCloud extends React.Component {
     if (folderName && folderName !== '') {
       fetch(`/api/storage/folder`, {
         method: 'post',
-        headers: getHeaders(true, true,this.state.isTeam),
+        headers: getHeaders(true, true, this.state.isTeam),
         body: JSON.stringify({
           parentFolderId: this.state.currentFolderId,
           folderName,
@@ -258,15 +258,14 @@ class XCloud extends React.Component {
             platform: 'web'
           })
           this.getFolderContent(this.state.currentFolderId, false);
-        })
-        this.getFolderContent(this.state.currentFolderId, false);
-      }).catch((err) => {
-        if (err.includes('already exists')) {
-          toast.warn('Folder with same name already exists');
-        } else {
-          toast.warn(`"${err}"`);
-        }
-      });
+
+        }).catch((err) => {
+          if (err.includes('already exists')) {
+            toast.warn('Folder with same name already exists');
+          } else {
+            toast.warn(`"${err}"`);
+          }
+        });
     } else {
       toast.warn('Invalid folder name');
     }
@@ -376,7 +375,7 @@ class XCloud extends React.Component {
     });
   };
 
-  getFolderContent = (rootId, updateNamePath = true, isTeam = false) => {
+  getFolderContent = async (rootId, updateNamePath = true, isTeam = false) => {
     let welcomeFile = await fetch('/api/welcome', {
       method: 'get',
       headers: getHeaders(true, false)
@@ -480,7 +479,7 @@ class XCloud extends React.Component {
     if (isFolder) {
       fetch(`/api/storage/folder/${itemId}/meta`, {
         method: 'post',
-        headers: getHeaders(true, true,this.state.isTeam),
+        headers: getHeaders(true, true, this.state.isTeam),
         body: data,
       })
         .then(() => {
@@ -853,7 +852,7 @@ class XCloud extends React.Component {
     //const bucket = _.last(this.state.namePath).bucket;
     const fetchOptions = {
       method: 'DELETE',
-      headers: getHeaders(true, false,this.state.isTeam),
+      headers: getHeaders(true, false, this.state.isTeam),
     };
 
     if (selectedItems.length === 0) return;
@@ -965,12 +964,12 @@ class XCloud extends React.Component {
           currentFolderId: team.root_folder_id,
           isTeam: true,
           namePath: [],
-          
+
         })
       }
     } else {
       const user = JSON.parse(localStorage.getItem("xUser"));
-      !user.root_folder_id ? this.userInitialization() : this.getFolderContent(user.root_folder_id);   
+      !user.root_folder_id ? this.userInitialization() : this.getFolderContent(user.root_folder_id);
       this.setState({
         currentFolderId: user.root_folder_id,
         isTeam: false,
@@ -982,10 +981,10 @@ class XCloud extends React.Component {
 
   componentDidUpdate(prevProps) {
     if (this.props.isTeam !== prevProps.isTeam) {
-        this.setState({ isTeam: this.props.isTeam });
-       
+      this.setState({ isTeam: this.props.isTeam });
+
     }
-}
+  }
 
 
   showTeamSettings = () => {
