@@ -18,6 +18,8 @@
 }
 
 #FileCommander-backTo {
+  align-self: flex-start;
+  justify-self: left;
   height: 30px;
   margin-top: 6px;
   font-size: 18px;
@@ -41,6 +43,10 @@
       top: -1.5px;
     }
   }
+}
+
+.FileCommander-options {
+  width: 195px;
 }
 
 // NO TOCAR, Si quieres modificar los estilos de los iconos, ve a FileCommanderItem.scss

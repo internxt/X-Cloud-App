@@ -397,7 +397,7 @@ class FileCommander extends React.Component {
             </div>
           }
           {
-            <div>
+            <div className="FileCommander-options">
               {/*
               <ButtonGroup className="switch-view">
                 <Button onClick={() => {

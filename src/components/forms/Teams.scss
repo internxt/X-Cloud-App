@@ -63,6 +63,11 @@
         height: auto;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        border: 0px;
+
+        .list-group-item{
+            border: 0px;
+        }
     }
 
     .trash{

@@ -109,13 +109,13 @@ class Teams extends React.Component<Props, State> {
         }
 
 
-        if(localStorage.getItem('xTeam')){
+        if (localStorage.getItem('xTeam')) {
             this.setState({ template: this.renderTeamSettings.bind(this) })
-        }else{
+        } else {
             this.setState({ template: this.renderPlans.bind(this) })
         }
 
-    
+
 
         const idTeam = JSON.parse(localStorage.getItem('xTeam') || '{}').idTeam;
         return fetch(`/api/teams/members/${idTeam}`, {
@@ -161,17 +161,19 @@ class Teams extends React.Component<Props, State> {
                 const base64Mnemonic = Buffer.from(EncryptMnemonicTeam.data).toString('base64')
                 const bridgeuser = JSON.parse(localStorage.getItem("xTeam") || "{}").user;
                 const idTeam = JSON.parse(localStorage.getItem("xTeam") || "{}").idTeam;
+               
 
 
                 await fetch('/api/teams/team-invitations', {
                     method: 'POST',
-                    headers: getHeaders(true, false,true),
+                    headers: getHeaders(true, false, true),
                     body: JSON.stringify({
                         email: mail,
                         bridgePass: base64bridge_password,
                         mnemonicTeam: base64Mnemonic,
                         bridgeuser: bridgeuser,
                         idTeam: idTeam
+                       
                     })
                 }).then(async res => {
                     return { response: res, data: await res.json() };
@@ -259,7 +261,7 @@ class Teams extends React.Component<Props, State> {
     renderPlans = (): JSX.Element => {
         return (
             <div className="settings">
-                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} isAdmin = {false} isMember = {false} />
+                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} isAdmin={false} isMember={false} />
 
                 <InxtContainer>
                     <TeamsPlans handleShowDescription={this.handleShowDescription} />
@@ -299,7 +301,7 @@ class Teams extends React.Component<Props, State> {
     handleCancelAccount = () => {
         fetch('/api/deactivateTeam', {
             method: 'GET',
-            headers: getHeaders(true, false,true)
+            headers: getHeaders(true, false, true)
         })
             .then(res => res.json())
             .then(res => {
@@ -329,7 +331,7 @@ class Teams extends React.Component<Props, State> {
         });
     }
 
-    renderTeamSettings  () {
+    renderTeamSettings() {
         return <div>
             <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={true} showSettingsButton={true} showFileButtons={false} isAdmin={true} isMember={false} />
             <div className="Teams">
@@ -350,16 +352,16 @@ class Teams extends React.Component<Props, State> {
                         </Container>
                     </Form>
                     <Container fluid className="lista-container mt-4">
-                            <ListGroup className='teams-lista'>
-                                {this.state.dataSource.map(item => {
-                                    return <ListGroup.Item >
-                                        <div className="row">
-                                            <div className='col-11'><span>{item.user}</span></div>
-                                            <div className='col-1'><span onClick={this.deletePeople.bind(this, item)}><i className="far fa-trash-alt"></i></span></div>
-                                        </div>
-                                    </ListGroup.Item>
-                                })}
-                            </ListGroup>
+                        <ListGroup className='teams-lista'>
+                            {this.state.dataSource.map(item => {
+                                return <ListGroup.Item >
+                                    <div className="row">
+                                        <div className='col-11'><span>{item.user}</span></div>
+                                        <div className='col-1'><span onClick={this.deletePeople.bind(this, item)}><i className="far fa-trash-alt"></i></span></div>
+                                    </div>
+                                </ListGroup.Item>
+                            })}
+                        </ListGroup>
                     </Container>
 
                 </Container>
@@ -387,7 +389,7 @@ class Teams extends React.Component<Props, State> {
                         </div>
                     </div>
                 </Popup>
-                
+
             </div>
         </div>
     }

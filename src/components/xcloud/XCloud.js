@@ -23,7 +23,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import axios from 'axios'
 
-import { analytics, getUserData} from '../../lib/analytics'
+import { analytics, getUserData } from '../../lib/analytics'
 import { clearLocalStorage } from '../../lib/localStorageUtils';
 
 
@@ -370,7 +370,7 @@ class XCloud extends React.Component {
 
   openFolder = (e) => {
     return new Promise((resolve) => {
-      this.getFolderContent(e.id, true, e.id_team || null);
+      this.getFolderContent(e);
       resolve();
     });
   };
@@ -382,91 +382,89 @@ class XCloud extends React.Component {
     }).then(res => res.json())
       .then(body => body.file_exists)
       .catch(() => false)
+
     fetch(`/api/storage/folder/${rootId}`, {
-
       method: 'get',
-      headers: getHeaders(true, true, isTeam),
-    })
-      .then((res) => {
-        if (res.status !== 200) {
-          throw res;
-        } else {
-          return res.json();
-        }
-      })
-      .then((data) => {
-        this.deselectAll();
+      headers: getHeaders(true, true, isTeam)
+    }).then((res) => {
+      if (res.status !== 200) {
+        throw res;
+      } else {
+        return res.json();
+      }
+    }).then((data) => {
+      this.deselectAll();
 
-        // Set new items list
-        let newCommanderFolders = _.map(data.children, (o) =>
-          _.extend({ isFolder: true, isSelected: false, isLoading: false, isDowloading: false }, o),
-        );
-        let newCommanderFiles = data.files;
+      // Set new items list
+      let newCommanderFolders = _.map(data.children, (o) =>
+        _.extend({ isFolder: true, isSelected: false, isLoading: false, isDowloading: false }, o),
+      );
+      let newCommanderFiles = data.files;
 
-        // Apply search function if is set
-        if (this.state.searchFunction) {
-          newCommanderFolders = newCommanderFolders.filter(this.state.searchFunction);
-          newCommanderFiles = newCommanderFiles.filter(this.state.searchFunction);
-        }
+      // Apply search function if is set
+      if (this.state.searchFunction) {
+        newCommanderFolders = newCommanderFolders.filter(this.state.searchFunction);
+        newCommanderFiles = newCommanderFiles.filter(this.state.searchFunction);
+      }
 
-        // Apply sort function if is set
-        if (this.state.sortFunction) {
-          newCommanderFolders.sort(this.state.sortFunction);
-          newCommanderFiles.sort(this.state.sortFunction);
-        }
+      // Apply sort function if is set
+      if (this.state.sortFunction) {
+        newCommanderFolders.sort(this.state.sortFunction);
+        newCommanderFiles.sort(this.state.sortFunction);
+      }
 
-        if (!data.parentId && welcomeFile) {
-          newCommanderFiles = _.concat([{
-            id: 0,
-            file_id: '0',
-            fileId: '0',
-            name: 'Welcome',
-            type: 'pdf',
-            size: 0,
-            isDraggable: false,
-            onClick: async () => {
-              analytics.track('file-welcome-open');
-              fetch('/Internxt.pdf').then(res => res.blob()).then(obj => {
-                fileDownload(obj, 'Welcome.pdf')
-              })
-            },
-            onDelete: async () => {
-              analytics.track('file-welcome-delete');
-              return fetch('/api/welcome', {
-                method: 'delete',
-                headers: getHeaders(true, false)
-              }).catch(err => {
-                console.error('Cannot delete welcome file, reason: %s', err.message)
-              })
-            }
-          }], newCommanderFiles)
-        }
-
-        this.setState({
-          currentCommanderItems: _.concat(newCommanderFolders, newCommanderFiles),
-          currentFolderId: data.id,
-          currentFolderBucket: data.bucket,
-        });
-
-        if (updateNamePath) {
-          // Only push path if it is not the same as actual path
-          if (
-            this.state.namePath.length === 0 ||
-            this.state.namePath[this.state.namePath.length - 1].id !== data.id
-          ) {
-            const folderName = this.props.user.root_folder_id === data.id ? 'All Files' : data.name;
-            this.setState({
-              namePath: this.pushNamePath({
-                name: folderName,
-                id: data.id,
-                bucket: data.bucket,
-                id_team: data.id_team
-              }),
-              isAuthorized: true,
-            });
+      if (!data.parentId && welcomeFile) {
+        newCommanderFiles = _.concat([{
+          id: 0,
+          file_id: '0',
+          fileId: '0',
+          name: 'Welcome',
+          type: 'pdf',
+          size: 0,
+          isDraggable: false,
+          onClick: async () => {
+            analytics.track('file-welcome-open');
+            fetch('/Internxt.pdf').then(res => res.blob()).then(obj => {
+              fileDownload(obj, 'Welcome.pdf')
+            })
+          },
+          onDelete: async () => {
+            analytics.track('file-welcome-delete');
+            return fetch('/api/welcome', {
+              method: 'delete',
+              headers: getHeaders(true, false)
+            }).catch(err => {
+              console.error('Cannot delete welcome file, reason: %s', err.message)
+            })
           }
+        }], newCommanderFiles)
+      }
+
+      this.setState({
+        currentCommanderItems: _.concat(newCommanderFolders, newCommanderFiles),
+        currentFolderId: data.id,
+        currentFolderBucket: data.bucket,
+      });
+
+      if (updateNamePath) {
+        // Only push path if it is not the same as actual path
+        if (
+          this.state.namePath.length === 0 ||
+          this.state.namePath[this.state.namePath.length - 1].id !== data.id
+        ) {
+          const folderName = this.props.user.root_folder_id === data.id ? 'All Files' : data.name;
+          this.setState({
+            namePath: this.pushNamePath({
+              name: folderName,
+              id: data.id,
+              bucket: data.bucket,
+              id_team: data.id_team
+            }),
+            isAuthorized: true,
+          });
         }
-      })
+      }
+    })
       .catch((err) => {
         if (err.status === 401) {
           history.push('/login');
