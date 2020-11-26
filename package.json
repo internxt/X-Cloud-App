@@ -25,6 +25,7 @@
     "openpgp": "^4.10.8",
     "popper.js": "^1.16.1",
     "prettysize": "^2.0.0",
+    "query-string": "^6.13.7",
     "react": "^16.13.0",
     "react-animations": "^1.0.0",
     "react-bootstrap": "=1.0.0-beta.17",
