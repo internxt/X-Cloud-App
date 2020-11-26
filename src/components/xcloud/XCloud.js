@@ -494,7 +494,7 @@ class XCloud extends React.Component {
     } else {
       fetch(`/api/storage/file/${itemId}/meta`, {
         method: 'post',
-        headers: getHeaders(true, true),
+        headers: getHeaders(true, true,this.state.isTeam),
         body: data,
       })
         .then(() => {
@@ -554,7 +554,7 @@ class XCloud extends React.Component {
       data[keyOp.toLowerCase() + 'Id'] = item.fileId || item.id;
       fetch(`/api/storage/move${keyOp}`, {
         method: 'post',
-        headers: getHeaders(true, true),
+        headers: getHeaders(true, true,this.state.isTeam),
         body: JSON.stringify(data),
       }).then(async (res) => {
         const response = await res.json();
@@ -594,6 +594,7 @@ class XCloud extends React.Component {
       });
     });
   };
+
 
   downloadFile = (id, _class, pcb) => {
     return new Promise((resolve) => {
