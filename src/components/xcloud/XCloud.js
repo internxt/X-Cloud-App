@@ -349,7 +349,7 @@ class XCloud extends React.Component {
     return new Promise((resolve, reject) => {
       fetch(`/api/storage/folder`, {
         method: 'post',
-        headers: getHeaders(true, true),
+        headers: getHeaders(true, true,this.state.isTeam),
         body: JSON.stringify({
           parentFolderId,
           folderName,
@@ -378,7 +378,7 @@ class XCloud extends React.Component {
   getFolderContent = async (rootId, updateNamePath = true, isTeam = false) => {
     let welcomeFile = await fetch('/api/welcome', {
       method: 'get',
-      headers: getHeaders(true, false)
+      headers: getHeaders(true, false,isTeam)
     }).then(res => res.json())
       .then(body => body.file_exists)
       .catch(() => false)
@@ -477,7 +477,7 @@ class XCloud extends React.Component {
     if (isFolder) {
       fetch(`/api/storage/folder/${itemId}/meta`, {
         method: 'post',
-        headers: getHeaders(true, true, this.state.isTeam),
+        headers: getHeaders(true, true,this.state.isTeam),
         body: data,
       })
         .then(() => {
@@ -510,6 +510,7 @@ class XCloud extends React.Component {
         });
     }
   };
+
 
   clearMoveOpEvent = (moveOpId) => {
     delete this.moveEvent[moveOpId];
