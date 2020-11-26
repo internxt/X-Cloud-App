@@ -47,12 +47,12 @@ class JoinTeam extends React.Component<Props, State> {
     }).then(response => {
       if (response.status === 200) {
         this.setState({ isTeamActivated: true });
-        toast.info("You've been joined succesfully to the team!");
+        toast.info("You have successfully joined to the team, please login");
         history.push('/');
       } else {
         // Wrong activation
         this.setState({ isTeamActivated: false })
-        toast.info("You've been NOT joined succesfully to the team!");
+        toast.warn('Your activation code is invalid. Maybe you have used this link before and your account is already activated.')
       }
 
     }).catch(error => {
@@ -63,9 +63,8 @@ class JoinTeam extends React.Component<Props, State> {
   redirect = () => {
 
     if (this.state.isTeamActivated) {
-      toast.info('You have been joined succesfully to the team!', { className: 'xcloud-toast-info' })
+      toast.info('You have successfully joined to the team, please login', { className: 'xcloud-toast-info' })
     } else {
-      toast.warn('Invalid token code')
       toast.warn('Your activation code is invalid. Maybe you have used this link before and your account is already activated.')
     }
     history.push("/");

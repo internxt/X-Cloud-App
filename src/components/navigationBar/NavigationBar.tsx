@@ -41,7 +41,7 @@ interface NavigationBarProps {
     handleChangeWorkspace?: any
     isAdmin: Boolean
     isMember: Boolean
-    
+
 }
 
 
@@ -132,9 +132,32 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             return;
         }
         if (this.props.showFileButtons) {
-            this.renderFileButtons();
+            this.setState({
+                navbarItems: <Nav className="m-auto">
+                    <div className="top-bar">
+                        <div className="search-container">
+                            <input alt="Search files" className="search" required style={{ backgroundImage: 'url(' + search + ')' }} onChange={this.props.setSearchFunction} />
+                        </div>
+                    </div>
+
+                    <HeaderButton icon={uploadFileIcon} name="Upload file" clickHandler={this.props.uploadFile} />
+                    <HeaderButton icon={newFolder} name="New folder" clickHandler={this.props.createFolder} />
+                    <HeaderButton icon={deleteFile} name="Delete" clickHandler={this.props.deleteItems} />
+                    <HeaderButton icon={share} name="Share" clickHandler={this.props.shareItem} />
+                    <input id="uploadFileControl" type="file" onChange={this.props.uploadHandler} multiple={true} />
+                    <HeaderButton icon={this.state.isTeam ? personalIcon : teamsIcon} name="Team" clickHandler={this.handleChangeWorkspace.bind(this)} />
+                    {this.state.isTeam}
+
+                </Nav>
+            })
         }
+
+
+
+
         this.getUsage(this.state.isTeam);
+
+
 
     }
 
@@ -142,15 +165,13 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
         if (this.props.isTeam !== prevProps.isTeam) {
             this.getUsage(this.props.isTeam);
             this.setState({ isTeam: this.props.isTeam });
-            this.renderFileButtons();
+
 
         }
 
     }
 
 
-    renderFileButtons() {
-    }
 
     handleChangeWorkspace(e) {
         if (this.state.isTeam) {
@@ -182,21 +203,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                     <a href="/"><img src={logo} alt="Logo" /></a>
                 </Navbar.Brand>
                 <Nav className="m-auto">
-                    <Nav className="m-auto">
-                        <div className="top-bar">
-                            <div className="search-container">
-                                <input alt="Search files" className="search" required style={{ backgroundImage: 'url(' + search + ')' }} onChange={this.props.setSearchFunction} />
-                            </div>
-                        </div>
-
-                        <HeaderButton icon={uploadFileIcon} name="Upload file" clickHandler={this.props.uploadFile} />
-                        <HeaderButton icon={newFolder} name="New folder" clickHandler={this.props.createFolder} />
-                        <HeaderButton icon={deleteFile} name="Delete" clickHandler={this.props.deleteItems} />
-                        <HeaderButton icon={share} name="Share" clickHandler={this.props.shareItem} />
-                        <input id="uploadFileControl" type="file" onChange={this.props.uploadHandler} multiple={true} />
-                        <HeaderButton icon={this.state.isTeam ? personalIcon : teamsIcon} name="Team" clickHandler={this.handleChangeWorkspace.bind(this)} />
-                        {this.state.isTeam}
-                    </Nav>
+                    {this.state.navbarItems}
                 </Nav>
                 <Nav style={{ margin: '0 13px 0 0' }}>
                     <Dropdown drop="left" className="settingsButton">

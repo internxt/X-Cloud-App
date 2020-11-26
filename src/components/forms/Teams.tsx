@@ -339,7 +339,7 @@ class Teams extends React.Component<Props, State> {
                     <Form className="form-register" onSubmit={this.sendInvitation}>
 
                         <div className="teams-title">Manage your Team</div>
-                        <div className="teams-description py-3">Welcome to your Team Drive account. Here you can add and remove team members.</div>
+                        <div className="teams-description py-3">Welcome to your Team Drive account. Here you can add and remove team members and invitations.</div>
                         <Container className="mail-container mt-4">
                             <div className="row">
                                 <div className="col-10 pl-0">
