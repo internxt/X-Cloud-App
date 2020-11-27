@@ -62,7 +62,6 @@ class Reset extends React.Component<ResetProps> {
         // Encrypt the mnemonic
         var encryptedMnemonic = encryptTextWithKey(localStorage.xMnemonic, this.state.newPassword);
         var encryptedPrivateKey = AesUtil.encrypt(localStorage.xKeys,this.state.newPassword,false); 
-        console.log('CONTRA ENCTIR', encryptedPrivateKey)
 
         fetch('/api/user/password', {
             method: 'PATCH',
@@ -83,7 +82,6 @@ class Reset extends React.Component<ResetProps> {
                 if (res.res.status !== 200) {
                     throw res.data.error;
                 } else {
-                    console.log('cambio contraseña')
                     analytics.track('user-change-password', {
                         status: 'success',
                         email: getUserData().email

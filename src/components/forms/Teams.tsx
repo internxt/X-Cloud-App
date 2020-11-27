@@ -140,11 +140,11 @@ class Teams extends React.Component<Props, State> {
             method: 'GET',
             headers: getHeaders(true, false),
         }).then((response) => {
-            response.json().then(async (rp) => {
+            response.json().then(async (keys) => {
                 //Datas
                 const bridgePass = JSON.parse(localStorage.getItem("xTeam") || "{}").password;
                 const mnemonicTeam = JSON.parse(localStorage.getItem("xTeam") || "{}").mnemonic;
-                const publicKeyArmored = Buffer.from(rp.publicKey, 'base64').toString()
+                const publicKeyArmored = Buffer.from(keys.publicKey, 'base64').toString()
 
                 //Encrypt
                 const EncryptBridgePass = await openpgp.encrypt({
@@ -161,9 +161,7 @@ class Teams extends React.Component<Props, State> {
                 const base64Mnemonic = Buffer.from(EncryptMnemonicTeam.data).toString('base64')
                 const bridgeuser = JSON.parse(localStorage.getItem("xTeam") || "{}").user;
                 const idTeam = JSON.parse(localStorage.getItem("xTeam") || "{}").idTeam;
-               
-
-
+            
                 await fetch('/api/teams/team-invitations', {
                     method: 'POST',
                     headers: getHeaders(true, false, true),
@@ -173,7 +171,6 @@ class Teams extends React.Component<Props, State> {
                         mnemonicTeam: base64Mnemonic,
                         bridgeuser: bridgeuser,
                         idTeam: idTeam
-                       
                     })
                 }).then(async res => {
                     return { response: res, data: await res.json() };
@@ -188,7 +185,6 @@ class Teams extends React.Component<Props, State> {
                 });
 
             }).catch((error) => {
-                console.log('Error RP', error);
             });
         }).catch((error) => {
             console.log('Error getting pubKey', error);
@@ -308,7 +304,6 @@ class Teams extends React.Component<Props, State> {
                 this.setState({ modalDeleteAccountShow: false });
             }).catch(err => {
                 toast.warn('Error deleting account');
-                console.log(err);
             });
     }
 

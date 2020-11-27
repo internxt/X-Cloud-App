@@ -40,8 +40,6 @@ class Deactivation extends React.Component<DeactivationProps> {
             console.log('All is ok')
             this.ClearAndRedirect()
         }).catch(err => {
-            console.log('GET ERROR', err);
-
             if (!isMobile) {
                 toast.warn('Invalid token');
                 history.push('/');
