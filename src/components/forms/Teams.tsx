@@ -261,7 +261,7 @@ class Teams extends React.Component<Props, State> {
     renderPlans = (): JSX.Element => {
         return (
             <div className="settings">
-                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} isAdmin={false} isMember={false} />
+                <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={false} showSettingsButton={true} showFileButtons={false} isAdmin={false} isMember={false} isPersonal = {false}/>
 
                 <InxtContainer>
                     <TeamsPlans handleShowDescription={this.handleShowDescription} />
@@ -333,7 +333,7 @@ class Teams extends React.Component<Props, State> {
 
     renderTeamSettings() {
         return <div>
-            <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={true} showSettingsButton={true} showFileButtons={false} isAdmin={true} isMember={false} />
+            <NavigationBar navbarItems={<h5>Teams</h5>} isTeam={true} showSettingsButton={true} showFileButtons={false} isAdmin={true} isMember={false} isPersonal={false} />
             <div className="Teams">
                 <Container className="teams-box p-5">
                     <Form className="form-register" onSubmit={this.sendInvitation}>
