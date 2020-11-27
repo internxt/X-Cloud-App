@@ -8,7 +8,7 @@ import { encryptText, passToHash, decryptText, encryptTextWithKey } from '../../
 import history from '../../lib/history'
 import { getHeaders } from '../../lib/auth'
 import { analytics, getUserData } from '../../lib/analytics'
-const AesUtil = require('./AesUtil');
+const AesUtil =  require('../../lib/AesUtil');
 
 
 interface ResetProps {

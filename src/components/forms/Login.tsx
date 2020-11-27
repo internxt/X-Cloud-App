@@ -12,7 +12,7 @@ import { getHeaders } from '../../lib/auth'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { analytics } from '../../lib/analytics';
-const AesUtil = require('./AesUtil');
+const AesUtil = require('../../lib/AesUtil');
 const openpgp = require('openpgp');
 
 

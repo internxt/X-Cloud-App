@@ -12,7 +12,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { analytics } from "../../lib/analytics";
 import queryString, { ParsedQuery } from 'query-string'
 const openpgp = require('openpgp');
-const AesUtil = require('./AesUtil');
+const AesUtil =  require('../../lib/AesUtil');
 
 
 const bip39 = require('bip39')
