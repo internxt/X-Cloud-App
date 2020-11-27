@@ -127,7 +127,7 @@ class Reset extends React.Component<ResetProps> {
 
     render() {
         return <div>
-            <NavigationBar navbarItems={<h5>Settings</h5>} isTeam={false} isMember={false} isAdmin={false} isPersonal={false} />
+            <NavigationBar navbarItems={<h5>Settings</h5>} isTeam={false} isMember={false} isAdmin={false} />
             <Container className="login-main">
                 <Container className="login-container-box edit-password-box">
                     <div className="container-register">

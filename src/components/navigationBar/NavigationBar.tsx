@@ -41,8 +41,6 @@ interface NavigationBarProps {
     handleChangeWorkspace?: any
     isAdmin: Boolean
     isMember: Boolean
-    isPersonal: Boolean
-
 }
 
 
@@ -55,8 +53,6 @@ interface NavigationBarState {
     isTeam: Boolean
     isAdmin: Boolean
     isMember: Boolean
-    isPersonal: Boolean
-
 }
 
 class NavigationBar extends React.Component<NavigationBarProps, NavigationBarState> {
@@ -72,7 +68,6 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             isTeam: this.props.isTeam,
             isAdmin: this.props.isAdmin,
             isMember: this.props.isMember,
-            isPersonal: this.props.isPersonal
         };
     }
 
@@ -92,16 +87,6 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
     }
 
     componentDidMount() {
-
-        if (this.state.workspace === 'My Workspace') {
-            this.setState({
-                isPersonal: true
-            })
-        } else if (this.state.workspace === 'Team Workspace') {
-            this.setState({
-                isPersonal: false
-            })
-        }
 
         if (localStorage.getItem('xTeam')) {
             const usuario1 = JSON.parse(localStorage.getItem('xUser') || '{}').email
