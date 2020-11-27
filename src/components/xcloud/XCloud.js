@@ -94,9 +94,8 @@ class XCloud extends React.Component {
             }).catch((err) => { });
           } else if (team && !team.root_folder_id) {
             this.teamInitialization();
-          } else {
-            this.getFolderContent(team.root_folder_id);
-            }
+            this.setState({ currentFolderId: this.props.user.root_folder_id });
+          } 
        
         this.setState({ isActivated, isInitialized: true });
       }
@@ -132,7 +131,6 @@ teamInitialization = () => {
         reject(null);
       }
     }).then(folder => {
-      this.getFolderContent(folder)
     }).catch((error) => {
       console.log(error)
       reject(error);
