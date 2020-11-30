@@ -157,38 +157,22 @@ class Login extends React.Component<LoginProps> {
       if (response.status === 200) {
         // Manage credentials verification
         response.json().then(async (body) => {
-          // Check password
-
-          if (!body.publicKeyExists && !body.privateKeyExists) {
+          let encPrivateKey1: string | null = null;
+          let base64publicKey: string | null = null;
+          let base64revocationKey: string | null = null;
+          if (!body.hasKeys) {
             const { privateKeyArmored, publicKeyArmored, revocationCertificate } = await openpgp.generateKey({
               userIds: [{ email: 'inxt@inxt.com' }], // you can pass multiple user IDs
               curve: 'ed25519',                                           // ECC curve name       // protects the private key
-            });
-            const encPrivateKey = AesUtil.encrypt(privateKeyArmored, this.state.password, false);
-            const base64publicKey = Buffer.from(publicKeyArmored).toString('base64');
-            const base64revocationKey = Buffer.from(revocationCertificate).toString('base64');
-
-
-            fetch('/api/user/generateKey', {
-              method: 'post',
-              headers: getHeaders(true, false),
-              body: JSON.stringify({
-                email: this.state.email,
-                publicKey: base64publicKey,
-                privateKey: encPrivateKey,
-                revocationKey: base64revocationKey
-              })
-            }).then(result => result.json()).then(async result => {
-              return { result, data: await result.json() };
-            }).catch(err => {
-              console.log('Error generating keys', err.message);
-            });
+            })
+            encPrivateKey1 = AesUtil.encrypt(privateKeyArmored, this.state.password, false);
+            base64publicKey = Buffer.from(publicKeyArmored).toString('base64');
+            base64revocationKey = Buffer.from(revocationCertificate).toString('base64');
           }
-
+          // Check password
           const salt = decryptText(body.sKey);
           const hashObj = passToHash({ password: this.state.password, salt });
           const encPass = encryptText(hashObj.hash);
-
 
           fetch("/api/access", {
             method: "post",
@@ -196,12 +180,14 @@ class Login extends React.Component<LoginProps> {
             body: JSON.stringify({
               email: this.state.email,
               password: encPass,
-              tfa: this.state.twoFactorCode
+              tfa: this.state.twoFactorCode,
+              privateKey: encPrivateKey1,
+              publicKey: base64publicKey,
+              revocateKey: base64revocationKey
             })
           }).then(async res => {
             return { res, data: await res.json() };
           }).then(async res => {
-
             if (res.res.status !== 200) {
               analytics.track('user-signin-attempted', {
                 status: 'error',
@@ -210,13 +196,12 @@ class Login extends React.Component<LoginProps> {
               throw new Error(res.data.error ? res.data.error : res.data);
             }
 
-            const publicKey = res.data.user.publicKey;
             const privateKey = res.data.user.privateKey;
-            const revocationKey = res.data.user.revocationKey;
+            const publicKey = res.data.user.publicKey;
+            const revocateKey = res.data.user.revocateKey;
             const privkeyDecrypted = AesUtil.decrypt(privateKey, this.state.password)
-
             const ArmoredPublicKey = Buffer.from(publicKey, 'base64').toString()
-            const ArmoredRevocateKey = Buffer.from(revocationKey, 'base64').toString()
+            const ArmoredRevocateKey = Buffer.from(revocateKey, 'base64').toString()
 
             localStorage.setItem('xKeys', privkeyDecrypted);
             localStorage.setItem('xKeyPublic', ArmoredPublicKey);
@@ -246,6 +231,7 @@ class Login extends React.Component<LoginProps> {
               credit: data.user.credit,
               createdAt: data.user.createdAt
             };
+
 
             if (this.props.handleKeySaved) {
               this.props.handleKeySaved(user)
@@ -288,9 +274,10 @@ class Login extends React.Component<LoginProps> {
             });
 
           }).catch(err => {
-              toast.warn(`"${err.error ? err.error : err}"`);
-              this.setState({ isLogingIn: false })
-            });
+            toast.warn(`"${err.error ? err.error : err}"`);
+            this.setState({ isLogingIn: false })
+          });
+
         });
       } else if (response.status === 400) {
         // Manage other cases:
