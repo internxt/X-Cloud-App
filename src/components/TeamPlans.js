@@ -11,7 +11,6 @@ import iconPayPal from '../assets/PaymentBridges/paypal.svg'
 import { getHeaders } from '../lib/auth'
 const bip39 = require('bip39')
 const openpgp = require('openpgp');
-const STRIPE_DEBUG = true;
 
 const stripeGlobal = window.Stripe;
 
@@ -56,7 +55,7 @@ class TeamsPlans extends React.Component {
     }
 
     loadAvailableProducts() {
-        fetch('/api/stripe/teams/products' + (STRIPE_DEBUG ? '?test=true' : ''), {
+        fetch('/api/stripe/teams/products' + (process.env.NODE_ENV !== 'production' ? '?test=true' : ''), {
             headers: getHeaders(true, false)
         }).then(response => response.json()).then(products => {
             this.setState({
@@ -70,7 +69,7 @@ class TeamsPlans extends React.Component {
 
     loadAvailablePlans() {
         const body = { product: this.state.selectedProductToBuy.id }
-        if (STRIPE_DEBUG) { body.test = true }
+        if (process.env.NODE_ENV !== 'production') { body.test = true }
         fetch('/api/stripe/teams/plans', {
             method: 'post',
             headers: getHeaders(true, false),
@@ -99,7 +98,7 @@ class TeamsPlans extends React.Component {
            
         });
         const codmnemonicTeam = Buffer.from(encMnemonicTeam.data).toString('base64');
-        const stripe = new stripeGlobal(STRIPE_DEBUG ? process.env.REACT_APP_STRIPE_TEST_PK : process.env.REACT_APP_STRIPE_PK);
+        const stripe = new stripeGlobal(process.env.NODE_ENV !== 'production' ? process.env.REACT_APP_STRIPE_TEST_PK : process.env.REACT_APP_STRIPE_PK);
         const body = { plan: this.state.selectedPlanToBuy.id, sessionType: 'team', product: this.state.selectedProductToBuy.id, mnemonicTeam: codmnemonicTeam};
 
         if (/^pk_test_/.exec(stripe._apiKey)) { body.test = true }

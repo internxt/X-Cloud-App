@@ -93,7 +93,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             if (usuario1 === usuario2) {
                 this.setState({ isAdmin: true });
             } else {
-                this.setState({ isMember: false });
+                this.setState({ isAdmin: false });
             }
         } else {
             this.setState({ isAdmin: true });
