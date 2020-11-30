@@ -295,16 +295,22 @@ class Teams extends React.Component<Props, State> {
     }
 
     handleCancelAccount = () => {
-        fetch('/api/deactivateTeam', {
-            method: 'GET',
-            headers: getHeaders(true, false, true)
-        })
-            .then(res => res.json())
-            .then(res => {
-                this.setState({ modalDeleteAccountShow: false });
-            }).catch(err => {
-                toast.warn('Error deleting account');
-            });
+        fetch('/api/teams/deleteAccount', {
+            method: 'POST',
+            headers: getHeaders(true, false,true),
+            body: JSON.stringify({ email: this.state.email })
+        }).then(async res => {
+            return { response: res, data: await res.json() };
+        }).then(res => {
+            this.setState({ modalDeleteAccountShow: false });
+            if (res.response.status !== 200) {
+                throw res.data;
+            } else {
+                toast.info(`The request has been sent to hello@internxt.com`);
+            }
+        }).catch(err => {
+            toast.warn(`Error: ${err.error ? err.error : 'Internal Server Error'}`);
+        });
     }
 
 
@@ -373,7 +379,7 @@ class Teams extends React.Component<Props, State> {
                         </div>
                         <div className="message-wrapper">
                             <h1>Are you sure?</h1>
-                            <p className="delete-account-advertising">All your files will be gone forever and you will lose access to your Internxt Drive account. Any active subscriptions you might have will also be cancelled. Once you click delete account, you will receive a confirmation email.</p>
+                            <p className="delete-account-advertising">All your files will be gone forever and you will lose access to your Internxt Drive account. Any active subscriptions you might have will also be cancelled. Once you click delete account, a request will be sent to hello@internxt.com and the account will be deleted in a few hours.</p>
                             <div className="buttons-wrapper">
                                 <div className="default-button button-primary delete-account-button"
                                     onClick={this.handleCancelAccount}>
