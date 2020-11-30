@@ -92,12 +92,16 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             const usuario2 = JSON.parse(localStorage.getItem('xTeam') || '{}').admin
             if (usuario1 === usuario2) {
                 this.setState({ isAdmin: true });
+
             } else {
                 this.setState({ isAdmin: false });
+
             }
         } else {
             this.setState({ isAdmin: true });
+
         }
+
 
 
         let user = null;
@@ -193,7 +197,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
                                 <Dropdown.Item onClick={(e) => { history.push('/settings'); }}>Settings</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => { history.push('/security'); }}>Security</Dropdown.Item>
                                 <Dropdown.Item onClick={(e) => { history.push('/invite'); }}>Referrals</Dropdown.Item>
-                                 <Dropdown.Item onClick={(e) => { history.push('/teams');; }}>Teams</Dropdown.Item> 
+                                {this.state.isAdmin ? <Dropdown.Item onClick={(e) => { history.push('/teams');; }}>Teams</Dropdown.Item> : ''}
                                 <Dropdown.Item onClick={(e) => {
                                     function getOperatingSystem() {
                                         let operatingSystem = 'Not known';
