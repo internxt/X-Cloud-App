@@ -87,7 +87,6 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
     }
 
     componentDidMount() {
-
         if (localStorage.getItem('xTeam')) {
             const usuario1 = JSON.parse(localStorage.getItem('xUser') || '{}').email
             const usuario2 = JSON.parse(localStorage.getItem('xTeam') || '{}').admin
@@ -121,6 +120,8 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             this.getUsage(this.props.isTeam);
             this.setState({ isTeam: this.props.isTeam });
         }
+        
+
     }
 
 

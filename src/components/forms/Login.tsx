@@ -200,10 +200,14 @@ class Login extends React.Component<LoginProps> {
             const publicKey = res.data.user.publicKey;
             const revocateKey = res.data.user.revocateKey;
             const privkeyDecrypted = AesUtil.decrypt(privateKey, this.state.password)
+          
+
             const ArmoredPublicKey = Buffer.from(publicKey, 'base64').toString()
             const ArmoredRevocateKey = Buffer.from(revocateKey, 'base64').toString()
 
+
             localStorage.setItem('xKeys', privkeyDecrypted);
+
             localStorage.setItem('xKeyPublic', ArmoredPublicKey);
 
 
