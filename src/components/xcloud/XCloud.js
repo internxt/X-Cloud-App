@@ -48,7 +48,7 @@ class XCloud extends React.Component {
       searchFunction: null,
       popupShareOpened: false,
       showDeleteItemsPopup: false,
-      isAdmin: false,
+      isAdmin: true,
       isMember: false,
     };
 
@@ -95,8 +95,15 @@ class XCloud extends React.Component {
           } else if (team && !team.root_folder_id) {
             this.teamInitialization();
             this.setState({ currentFolderId: this.props.user.root_folder_id });
-          } 
-       
+            const usuario1 = JSON.parse(localStorage.getItem('xUser') || '{}').email
+            const usuario2 = JSON.parse(localStorage.getItem('xTeam') || '{}').admin
+            if (usuario1 === usuario2) {
+              this.setState({ isAdmin: true });
+            } else {
+              this.setState({ isAdmin: false });
+            }
+        }
+
         this.setState({ isActivated, isInitialized: true });
       }
         }).catch ((error) => {
