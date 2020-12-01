@@ -103,7 +103,7 @@ class TeamsPlans extends React.Component {
 
         if (/^pk_test_/.exec(stripe._apiKey)) { body.test = true }
 
-        fetch('/api/stripe/session', {
+        fetch('/api/stripe/teams/session', {
             method: 'POST',
             headers: getHeaders(true, false),
             body: JSON.stringify(body)
