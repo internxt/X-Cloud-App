@@ -264,6 +264,7 @@ class Login extends React.Component<LoginProps> {
                 mnemonic: mnemonicDecrypt.data,
                 admin: data.userTeam.admin,
                 root_folder_id: data.userTeam.root_folder_id,
+                isAdmin: data.userTeam.isAdmin
               }
               localStorage.setItem('xTeam', JSON.stringify(team));
               localStorage.setItem('xTokenTeam', data.tokenTeam);
