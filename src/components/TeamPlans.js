@@ -14,6 +14,8 @@ const openpgp = require('openpgp');
 
 const stripeGlobal = window.Stripe;
 
+const STRIPE_DEBUG = true;
+
 const PaymentBridges = [
     {
         name: 'Card',
@@ -55,7 +57,7 @@ class TeamsPlans extends React.Component {
     }
 
     loadAvailableProducts() {
-        fetch('/api/stripe/teams/products' + (process.env.NODE_ENV !== 'production' ? '?test=true' : ''), {
+        fetch('/api/stripe/teams/products' + (process.env.NODE_ENV !== 'production' || STRIPE_DEBUG ? '?test=true' : ''), {
             headers: getHeaders(true, false)
         }).then(response => response.json()).then(products => {
             this.setState({
@@ -69,7 +71,7 @@ class TeamsPlans extends React.Component {
 
     loadAvailablePlans() {
         const body = { product: this.state.selectedProductToBuy.id }
-        if (process.env.NODE_ENV !== 'production') { body.test = true }
+        if (process.env.NODE_ENV !== 'production' || STRIPE_DEBUG) { body.test = true }
         fetch('/api/stripe/teams/plans', {
             method: 'post',
             headers: getHeaders(true, false),
@@ -98,7 +100,7 @@ class TeamsPlans extends React.Component {
            
         });
         const codmnemonicTeam = Buffer.from(encMnemonicTeam.data).toString('base64');
-        const stripe = new stripeGlobal(process.env.NODE_ENV !== 'production' ? process.env.REACT_APP_STRIPE_TEST_PK : process.env.REACT_APP_STRIPE_PK);
+        const stripe = new stripeGlobal(process.env.NODE_ENV !== 'production' || STRIPE_DEBUG ? process.env.REACT_APP_STRIPE_TEST_PK : process.env.REACT_APP_STRIPE_PK);
         const body = { plan: this.state.selectedPlanToBuy.id, sessionType: 'team', product: this.state.selectedProductToBuy.id, mnemonicTeam: codmnemonicTeam};
 
         if (/^pk_test_/.exec(stripe._apiKey)) { body.test = true }
@@ -128,7 +130,7 @@ class TeamsPlans extends React.Component {
         if (this.state.storageStep === 1) {
             return (<div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <p className="title1">Team Planss</p>
+                    <p className="title1">Team Plans</p>
                     <span
                         onClick={() => {
                             this.props.handleShowDescription(true);
