@@ -88,7 +88,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
 
     componentDidMount() {
         if (localStorage.getItem('xTeam')) {
-            const usuario1 = JSON.parse(localStorage.getItem('xUser') || '{}').email
+            const usuario1 = JSON.parse(localStorage.getItem('xUser') || '{}').email.toLowerCase();
             const usuario2 = JSON.parse(localStorage.getItem('xTeam') || '{}').admin
             if (usuario1 === usuario2) {
                 this.setState({ isAdmin: true });
