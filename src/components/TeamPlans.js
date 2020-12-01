@@ -128,7 +128,7 @@ class TeamsPlans extends React.Component {
         if (this.state.storageStep === 1) {
             return (<div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <p className="title1">Team Plans</p>
+                    <p className="title1">Team Planss</p>
                     <span
                         onClick={() => {
                             this.props.handleShowDescription(true);
