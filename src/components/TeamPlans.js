@@ -14,7 +14,7 @@ const openpgp = require('openpgp');
 
 const stripeGlobal = window.Stripe;
 
-const STRIPE_DEBUG = true;
+const STRIPE_DEBUG = false;
 
 const PaymentBridges = [
     {
