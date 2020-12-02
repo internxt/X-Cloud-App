@@ -74,21 +74,23 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
     async getUsage(isTeam: Boolean = false) {
         const limit = await fetch('/api/limit/', {
             headers: getHeaders(true, false, isTeam)
-        }).then(res => res.json())
+        }).then(res => res.json()).catch(() => null)
 
         const usage = await fetch('/api/usage/', {
             headers: getHeaders(true, false, isTeam)
-        }).then(res3 => res3.json())
+        }).then(res3 => res3.json()).catch(() => null)
 
-        this.setState({
-            barUsage: usage.total,
-            barLimit: limit.maxSpaceBytes
-        })
+        if (limit && usage) {
+            this.setState({
+                barUsage: usage.total,
+                barLimit: limit.maxSpaceBytes
+            })
+        }
     }
 
     componentDidMount() {
         if (localStorage.getItem('xTeam')) {
-            const admin  = JSON.parse(localStorage.getItem('xTeam') || '{}').isAdmin
+            const admin = JSON.parse(localStorage.getItem('xTeam') || '{}').isAdmin
             if (admin) {
                 this.setState({ isAdmin: true });
 
@@ -123,7 +125,7 @@ class NavigationBar extends React.Component<NavigationBarProps, NavigationBarSta
             this.getUsage(this.props.isTeam);
             this.setState({ isTeam: this.props.isTeam });
         }
-        
+
 
     }
 

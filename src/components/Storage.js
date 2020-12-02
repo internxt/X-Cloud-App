@@ -26,7 +26,7 @@ class Storage extends React.Component {
         now: 0,
 
         modalDeleteAccountShow: false,
-        
+
     }
 
     componentDidMount() {
@@ -36,7 +36,7 @@ class Storage extends React.Component {
         }
 
         this.getUsage();
-        
+
     }
 
     payMethodLoader = (plan) => {
@@ -50,16 +50,18 @@ class Storage extends React.Component {
 
         const limit = await fetch('/api/limit/', {
             headers: getHeaders(true, false, isTeam)
-        }).then(res => res.json())
+        }).then(res => res.json()).catch(() => null)
 
         const usage = await fetch('/api/usage/', {
             headers: getHeaders(true, false, isTeam)
-        }).then(res3 => res3.json())
+        }).then(res3 => res3.json()).catch(() => null)
 
-        this.setState({
-            now: usage.total,
-            max: limit.maxSpaceBytes
-        })
+        if (limit && usage) {
+            this.setState({
+                now: usage.total,
+                max: limit.maxSpaceBytes
+            })
+        }
 
     }
 
@@ -77,12 +79,12 @@ class Storage extends React.Component {
             });
     }
 
-  
+
 
     render() {
         return (
             <div className="settings">
-                <NavigationBar navbarItems={<h5>Storage</h5>} showSettingsButton={true}  />
+                <NavigationBar navbarItems={<h5>Storage</h5>} showSettingsButton={true} />
                 <InxtContainer>
                     <p className="title">Storage Used</p>
 

@@ -88,7 +88,7 @@ class XCloud extends React.Component {
           if (!team) {
             this.getTeamByUser().then((team) => {
               localStorage.clear();
-              history.push('/login')
+               history.push('/login')
               toast.info('Subscription has been completed please login ');
 
             }).catch((err) => { });
@@ -170,7 +170,6 @@ class XCloud extends React.Component {
         }
       }).then(folder => {
       }).catch((error) => {
-        console.log(error)
         reject(error);
       });
     });
