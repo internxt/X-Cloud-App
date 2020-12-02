@@ -89,19 +89,19 @@ class TeamsPlans extends React.Component {
 
 
     handleStripePayment = async () => {
-        
+
         this.setState({ statusMessage: 'Purchasing...' });
         const mnemonicTeam = bip39.generateMnemonic(256);
         const publicKeyArmored = localStorage.xKeyPublic;
-        
+
         const encMnemonicTeam = await openpgp.encrypt({
             message: openpgp.message.fromText(mnemonicTeam),                 // input as Message object
             publicKeys: ((await openpgp.key.readArmored(publicKeyArmored)).keys),// for encryption
-           
+
         });
         const codmnemonicTeam = Buffer.from(encMnemonicTeam.data).toString('base64');
         const stripe = new stripeGlobal(process.env.NODE_ENV !== 'production' || STRIPE_DEBUG ? process.env.REACT_APP_STRIPE_TEST_PK : process.env.REACT_APP_STRIPE_PK);
-        const body = { plan: this.state.selectedPlanToBuy.id, sessionType: 'team', product: this.state.selectedProductToBuy.id, mnemonicTeam: codmnemonicTeam};
+        const body = { plan: this.state.selectedPlanToBuy.id, sessionType: 'team', product: this.state.selectedProductToBuy.id, mnemonicTeam: codmnemonicTeam };
 
         if (/^pk_test_/.exec(stripe._apiKey)) { body.test = true }
 
@@ -131,16 +131,7 @@ class TeamsPlans extends React.Component {
             return (<div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <p className="title1">Team Plans</p>
-                    <span
-                        onClick={() => {
-                            this.props.handleShowDescription(true);
-                        }}
-                        
-                        onDoubleClick={() => {
-                            this.props.handleShowDescription(false);
-                        }}
-                        
-                    ><i className="fas fa-info-circle"></i></span>
+
                 </div>
 
 
@@ -149,8 +140,10 @@ class TeamsPlans extends React.Component {
                 </div> : ''}
                 {this.state.productsLoading === 'error' ? 'There was an error loading the available plans: The server was unreachable. Please check your network connection and reload.' : ''}
                 <Row className='mt-0'>
+
                     {this.state.availableProducts ?
                         this.state.availableProducts.map((entry, i) => {
+
                             // Print the list of available products
                             return <InxtContainerOption
                                 key={'plan' + i}
@@ -165,11 +158,13 @@ class TeamsPlans extends React.Component {
                                     'Free' :
                                     <span>
                                         <span style={{ display: 'block' }}>{entry.metadata.team_members !== 'unlimited' ? `Up to ${entry.metadata.team_members} members` : 'Unlimited'}</span>
-                                        <span style={{ display: 'block' }}>€{entry.metadata.price_eur}<span style={{textAlign:'center', color: '#7e848c', fontWeight: 'normal' }}>/month</span></span>
+                                        <span style={{ display: 'block' }}>€{entry.metadata.price_eur}<span style={{ textAlign: 'center', color: '#7e848c', fontWeight: 'normal' }}>/month</span></span>
                                     </span>
                                 } />
+
                         })
                         : ''}
+
                 </Row>
             </div>);
         }
