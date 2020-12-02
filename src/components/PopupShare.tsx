@@ -18,6 +18,7 @@ interface PopupShareProps {
     onClose: any
     item: any
     open: any
+    isTeam: boolean
 }
 
 class PopupShare extends React.Component<PopupShareProps> {
@@ -30,7 +31,7 @@ class PopupShare extends React.Component<PopupShareProps> {
         return new Promise((resolve, reject) => {
             fetch('/api/storage/shortLink', {
                 method: 'POST',
-                headers: getHeaders(true, true),
+                headers: getHeaders(true, true, this.props.isTeam),
                 body: JSON.stringify({ 'url': url })
             }).then(res => res.json()).then(res => { resolve(res.shortUrl) }).catch(reject);
         });
@@ -40,7 +41,7 @@ class PopupShare extends React.Component<PopupShareProps> {
         return new Promise((resolve, reject) => {
             fetch(`/api/storage/share/file/${fileId}`, {
                 method: 'POST',
-                headers: getHeaders(true, true),
+                headers: getHeaders(true, true, this.props.isTeam),
                 body: JSON.stringify({
                     'isFolder': this.props.item.isFolder ? 'true' : 'false',
                     'views': views

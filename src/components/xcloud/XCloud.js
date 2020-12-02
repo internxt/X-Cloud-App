@@ -95,7 +95,7 @@ class XCloud extends React.Component {
           } else if (team && !team.root_folder_id) {
             this.teamInitialization();
             this.setState({ currentFolderId: this.props.user.root_folder_id });
-           
+
           }
 
           this.setState({ isActivated, isInitialized: true });
@@ -470,7 +470,7 @@ class XCloud extends React.Component {
             analytics.track('file-welcome-delete');
             return fetch('/api/welcome', {
               method: 'delete',
-              headers: getHeaders(true, false,isTeam)
+              headers: getHeaders(true, false, isTeam)
             }).catch(err => {
               console.error('Cannot delete welcome file, reason: %s', err.message)
             })
@@ -492,7 +492,7 @@ class XCloud extends React.Component {
         ) {
 
           let folderName = '';
-           
+
           if (this.state.isTeam) {
             const rootFolderIdTeam = JSON.parse(localStorage.getItem('xTeam') || '{}').root_folder_id;
             folderName = rootFolderIdTeam === data.id ? 'All Files' : data.name;
@@ -996,7 +996,7 @@ class XCloud extends React.Component {
     history.push('/storage');
   };
 
-  
+
 
 
   showTeamSettings = () => {
@@ -1042,6 +1042,7 @@ class XCloud extends React.Component {
 
           {this.getSelectedItems().length > 0 && this.state.popupShareOpened ? (
             <PopupShare
+              isTeam={this.state.isTeam}
               open={this.state.popupShareOpened}
               item={this.getSelectedItems()[0]}
               onClose={() => {
