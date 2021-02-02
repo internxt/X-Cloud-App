@@ -5,10 +5,22 @@
   height: 100%;
 }
 
+$breadcrumb-divider: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8' standalone='no'%3F%3E%3Csvg xmlns:svg='http://www.w3.org/2000/svg' xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 257 451'%3E%3Cg id='g23' transform='translate(-96.864923)'%3E%3Cpath d='M 345.441,248.292 151.154,442.573 c -12.359,12.365 -32.397,12.365 -44.75,0 -12.354,-12.354 -12.354,-32.391 0,-44.744 L 278.318,225.92 106.409,54.017 c -12.354,-12.359 -12.354,-32.394 0,-44.748 12.354,-12.359 32.391,-12.359 44.75,0 l 194.287,194.284 c 6.177,6.18 9.262,14.271 9.262,22.366 0,8.099 -3.091,16.196 -9.267,22.373 z' id='path21' /%3E%3C/g%3E%3C/svg%3E");
+
+li + li:before {
+  color: #ccc;
+  content: $breadcrumb-divider !important;
+}
+
 #FileCommander-info {
-  display: flex;
-  justify-content: center;
   padding: 0 20px;
+
+  nav {
+    ol {
+      background-color: transparent;
+      margin: 0px;
+    }
+  }
 }
 
 #FileCommander-path {
@@ -48,7 +60,6 @@
 #FileCommander-items {
   height: 100%;
   &.mosaico {
-    margin-top: 13px;
     padding: 0 38px;
     border-top: solid 1px #f2f2f2;
     flex-grow: 1;
