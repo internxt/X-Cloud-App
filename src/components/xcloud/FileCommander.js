@@ -1,13 +1,11 @@
 // import * as _ from 'lodash'
 import * as React from 'react';
-import { Dropdown } from 'react-bootstrap';
+import { Breadcrumb } from 'react-bootstrap';
 import async from 'async';
 import $ from 'jquery'
 
 import './FileCommander.scss';
 import FileCommanderItem from './FileCommanderItem';
-import DropdownArrowIcon from '../../assets/Dashboard-Icons/Dropdown arrow.svg';
-import BackToIcon from '../../assets/Dashboard-Icons/back-arrow.svg';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -329,65 +327,13 @@ class FileCommander extends React.Component {
     return (
       <div id="FileCommander">
         <div id="FileCommander-info">
-          {
-            <div
-              id="FileCommander-backTo">
-              {this.state.namePath.length > 1 ? (
-                <span
-                  onClick={this.props.handleFolderTraverseUp.bind(this)}
-                  onDragOver={this.handleDragOverBackButton}
-                  onDrop={this.handleDropOverBackButton}>
-                  <img src={BackToIcon} alt="Back" />{' '}
-                  {this.state.namePath[this.state.namePath.length - 2].name}
-                </span>
-              ) : (
-                  ''
-                )}
-            </div>
-          }
-          {
-            <div id="FileCommander-path">
-              <Dropdown className="dropdownButton">
-                <Dropdown.Toggle>
-                  {this.state.namePath.length > 1
-                    ? this.state.namePath[this.state.namePath.length - 1].name
-                    : 'All Files'}
-                  <img src={DropdownArrowIcon} alt="Dropdown" />
-                </Dropdown.Toggle>
-                <Dropdown.Menu>
-                  <Dropdown.Item
-                    id={SORT_TYPES.DATE_ADDED}
-                    onClick={() => this.sortItems(SORT_TYPES.DATE_ADDED)}
-                    onSelect={this.onSelect}
-                    active
-                  >
-                    Date Added
-                  </Dropdown.Item>
-                  <Dropdown.Item
-                    id={SORT_TYPES.SIZE_ASC}
-                    onClick={() => this.sortItems(SORT_TYPES.SIZE_ASC)}
-                    onSelect={this.onSelect}
-                  >
-                    Size
-                  </Dropdown.Item>
-                  <Dropdown.Item
-                    id={SORT_TYPES.NAME_ASC}
-                    onClick={() => this.sortItems(this.state.selectedSortType === SORT_TYPES.NAME_ASC ? SORT_TYPES.NAME_DESC : SORT_TYPES.NAME_ASC)}
-                    onSelect={this.onSelect}
-                  >
-                    Name
-                  </Dropdown.Item>
-                  <Dropdown.Item
-                    id={SORT_TYPES.FILETYPE_ASC}
-                    onClick={() => this.sortItems(SORT_TYPES.FILETYPE_ASC)}
-                    onSelect={this.onSelect}
-                  >
-                    File Type
-                  </Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
-            </div>
-          }
+          <Breadcrumb>
+            {this.state.namePath.map(item => {
+              return <Breadcrumb.Item onClick={() => {
+                this.props.getFolderContent(item.id, true)
+              }}>{item.name}</Breadcrumb.Item>
+            })}
+          </Breadcrumb>
           {
             <div>
               {/*
@@ -436,7 +382,7 @@ class FileCommander extends React.Component {
                     item.isFolder
                       ? this.props.openFolder.bind(null, item.id)
                       : (item.onClick ? item.onClick : this.props.downloadFile.bind(null, item.fileId))
-                  
+
                   }
                   selectHandler={this.props.selectItems}
                   isLoading={!!item.isLoading}

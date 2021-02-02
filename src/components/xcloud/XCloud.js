@@ -308,7 +308,7 @@ class XCloud extends React.Component {
             this.state.namePath.length === 0 ||
             this.state.namePath[this.state.namePath.length - 1].id !== data.id
           ) {
-            const folderName = this.props.user.root_folder_id === data.id ? 'All Files' : data.name;
+            const folderName = this.props.user.root_folder_id === data.id ? 'Drive' : data.name;
             this.setState({
               namePath: this.pushNamePath({
                 name: folderName,
@@ -782,6 +782,12 @@ class XCloud extends React.Component {
   }
 
   pushNamePath(path) {
+    const arrayIds = this.state.namePath.map(x => x.id)
+    const index = arrayIds.indexOf(path.id)
+    if (index > -1) {
+      const squashItems = this.state.namePath.slice(0, index);
+      return update(squashItems, { $push: [path] });
+    }
     return update(this.state.namePath, { $push: [path] });
   }
 
