@@ -562,6 +562,23 @@ class XCloud extends React.Component {
       const data = new FormData();
       data.append('xfile', file);
 
+      axios.interceptors.request.use((config) => {
+        headers.forEach((value, key) => {
+          config.headers[key] = value
+        })
+        return config
+      })
+
+      return axios.post(uploadUrl, data, {
+        headers: headers,
+        onUploadProgress: (p) => {
+          console.log('Upload progress', p.loaded / p.total)
+        }
+      }).then(res => {
+        return { res, data: res.data }
+      })
+
+      return
       fetch(uploadUrl, {
         method: 'POST',
         headers: headers,
@@ -576,8 +593,7 @@ class XCloud extends React.Component {
               file_size: file.size,
               file_type: file.type,
               file_id: data.fileId
-            })
-
+            });
           } catch (err) {
             console.log(err)
             window.analytics.track('file-upload-error', {
