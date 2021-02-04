@@ -565,8 +565,17 @@ class XCloud extends React.Component {
 
     });
 
-    socket.on(`get-file-${socketId}-error`, ({ message }) => {
+    socket.on(`get-file-${socketId}-error`, (err) => {
+      window.analytics.track('file-download-error', {
+        file_id: id,
+        email: getUserData().email,
+        msg: err.message,
+        platform: 'web'
+      });
 
+      // check if unauthorized -> history.push('/login');
+      // else
+      toast.warn(`Error downloading file: \n ${err.message} \n File id: ${id}`);
     });
 
   }
