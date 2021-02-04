@@ -563,12 +563,16 @@ class XCloud extends React.Component {
     });
 
     socket.on(`get-file-${socketId}-stream`, (chunk) => {
+      let progress = (chunk.byteLength / size) * 100;
+      pcb.setState({ progress });
+      
       slices.push(chunk);
     })
 
     socket.on(`get-file-${socketId}-finished`, () => {
       const fileBlob = new Blob(slices);
       fileDownload(fileBlob, fileName);
+      pcb.setState({ progress: 0 });
     });
 
     socket.on(`get-file-${socketId}-error`, (err) => {
