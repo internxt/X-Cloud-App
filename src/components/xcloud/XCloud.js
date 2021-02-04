@@ -26,7 +26,6 @@ import axios from 'axios'
 import { getUserData } from '../../lib/analytics'
 import Settings from '../../lib/settings';
 import { socket } from '../../../src/lib/socket'
-import Settings from '../../../src/lib/settings'
 
 class XCloud extends React.Component {
 
@@ -548,7 +547,7 @@ class XCloud extends React.Component {
         platform: 'web'
       });
   
-      const jwt = `Bearer ${Settings.get("xToken")}`;
+      const jwt = Settings.get("xToken");
       const mnemonic = Settings.get("xMnemonic");
       const user = Settings.getUser();
       const socketId = socket.id;
@@ -571,8 +570,13 @@ class XCloud extends React.Component {
   
         slices.push(chunk);
       })
+
+      socket.on(`get-file-${socketId}-ping`, () => {
+        console.log('ping');
+      })
   
       socket.on(`get-file-${socketId}-finished`, () => {
+        console.log('finished')
         const fileBlob = new Blob(slices);
         fileDownload(fileBlob, fileName);
         pcb.setState({ progress: 0 });
@@ -585,6 +589,10 @@ class XCloud extends React.Component {
         });
 
         resolve();
+      });
+
+      socket.on('disconnect', (x) => {
+        console.log('disconnect', x);
       });
   
       socket.on(`get-file-${socketId}-error`, (err) => {
@@ -902,7 +910,7 @@ class XCloud extends React.Component {
           <FileCommander
             currentCommanderItems={this.state.currentCommanderItems}
             openFolder={this.openFolder}
-            downloadFile={this.downloadFile}
+            downloadFile={this.downloadFileSocket}
             selectItems={this.selectItems}
             namePath={this.state.namePath}
             handleFolderTraverseUp={this.folderTraverseUp.bind(this)}
