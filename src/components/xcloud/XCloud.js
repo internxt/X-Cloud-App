@@ -26,6 +26,7 @@ import axios from 'axios'
 import { getUserData } from '../../lib/analytics'
 import Settings from '../../lib/settings';
 import { socket } from '../../../src/lib/socket'
+import Settings from '../../../src/lib/settings'
 
 class XCloud extends React.Component {
 
@@ -547,12 +548,11 @@ class XCloud extends React.Component {
         platform: 'web'
       });
   
-      const headers = getHeaders(true, true);
-      const jwt = headers.get('Authorization');
-      const mnemonic = headers.get('internxt-mnemonic');
+      const jwt = `Bearer ${Settings.get("xToken")}`;
+      const mnemonic = Settings.get("xMnemonic");
+      const user = Settings.getUser();
       const socketId = socket.id;
       const fileId = id
-      const user = {};
   
       let slices = [];
       let fileName;
