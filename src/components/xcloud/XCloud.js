@@ -25,6 +25,7 @@ import axios from 'axios'
 
 import { getUserData } from '../../lib/analytics'
 import Settings from '../../lib/settings';
+import { socket } from '../../../src/lib/socket'
 
 class XCloud extends React.Component {
 
@@ -532,6 +533,43 @@ class XCloud extends React.Component {
       })
     });
   };
+
+  downloadFileSocket = (id, _class, pcb) => {
+    window.analytics.track('file-download-start', {
+      file_id: pcb.props.rawItem.id,
+      file_name: pcb.props.rawItem.name,
+      file_size: pcb.props.rawItem.size,
+      file_type: pcb.props.type,
+      email: getUserData().email,
+      folder_id: pcb.props.rawItem.folder_id,
+      platform: 'web'
+    });
+
+    const headers = getHeaders(true, true);
+    const jwt = headers.get('Authorization');
+    const mnemonic = headers.get('internxt-mnemonic');
+    const socketId = socket.id;
+    const fileId = id
+    const user = {};
+
+    socket.emit('get-file', { socketId, fileId, user, jwt, mnemonic });
+    socket.on(`get-file-${socketId}-sending-data`, ({ size, fileName }) => {
+
+    });
+
+    socket.on(`get-file-${socketId}-stream`, (chunk) => {
+
+    })
+
+    socket.on(`get-file-${socketId}-finished`, () => {
+
+    });
+
+    socket.on(`get-file-${socketId}-error`, ({ message }) => {
+
+    });
+
+  }
 
   openUploadFile = () => {
     $('input#uploadFileControl').val(null);
