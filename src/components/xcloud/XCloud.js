@@ -552,13 +552,15 @@ class XCloud extends React.Component {
     const fileId = id
     const user = {};
 
+    let slices = [];
+
     socket.emit('get-file', { socketId, fileId, user, jwt, mnemonic });
     socket.on(`get-file-${socketId}-sending-data`, ({ size, fileName }) => {
 
     });
 
     socket.on(`get-file-${socketId}-stream`, (chunk) => {
-
+      slices.push(chunk);
     })
 
     socket.on(`get-file-${socketId}-finished`, () => {
