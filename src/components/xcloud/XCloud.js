@@ -554,6 +554,7 @@ class XCloud extends React.Component {
       const fileId = id
   
       let slices = [];
+      let progress = 0;
       let fileName;
       let size;
   
@@ -565,28 +566,31 @@ class XCloud extends React.Component {
       });
   
       socket.on(`get-file-${socketId}-stream`, (chunk) => {
-        let progress = (chunk.byteLength / size) * 100;
+        progress += (chunk.byteLength / size) * 100;
+        console.log(`progress ${progress}`);
         pcb.setState({ progress });
   
         slices.push(chunk);
       })
-
-      socket.on(`get-file-${socketId}-ping`, () => {
-        console.log('ping');
-      })
   
       socket.on(`get-file-${socketId}-finished`, () => {
         console.log('finished')
+
         const fileBlob = new Blob(slices);
         fileDownload(fileBlob, fileName);
         pcb.setState({ progress: 0 });
-  
+
         window.analytics.track('file-download-finished', {
           file_id: id,
           email: getUserData().email,
           file_size: size,
           platform: 'web'
         });
+
+        // clean event handlers to ensure that the next time, is not firing multiple times
+        socket.off(`get-file-${socketId}-sending-data`);
+        socket.off(`get-file-${socketId}-stream`);
+        socket.off(`get-file-${socketId}-finished`);
 
         resolve();
       });
