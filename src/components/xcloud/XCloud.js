@@ -606,10 +606,12 @@ class XCloud extends React.Component {
           msg: err.message,
           platform: 'web'
         });
-  
-        // check if unauthorized -> history.push('/login');
-        // else
-        toast.warn(`Error downloading file: \n ${err.message} \n File id: ${id}`);
+
+        if(parseInt(err.statusCode) === 401) {
+          return history.push('/login');
+        } else {
+          toast.warn(`Error downloading file: \n ${err.message} \n File id: ${id}`);
+        }
 
         resolve();
       });
