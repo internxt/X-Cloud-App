@@ -25,7 +25,7 @@ import axios from 'axios'
 
 import { getUserData } from '../../lib/analytics'
 import Settings from '../../lib/settings';
-import { socket } from '../../../src/lib/socket'
+import { reconnect, socket, isInternetWorking } from '../../../src/lib/socket'
 
 class XCloud extends React.Component {
 
@@ -39,6 +39,7 @@ class XCloud extends React.Component {
     rateLimitModal: false,
     currentFolderId: null,
     currentFolderBucket: null,
+    fileDownloadQueue: [],
     currentCommanderItems: [],
     namePath: [],
     sortFunction: null,
@@ -534,89 +535,189 @@ class XCloud extends React.Component {
     });
   };
 
-  downloadFileSocket = (id, _class, pcb) => {
-    return new Promise((resolve) => {
 
-      window.analytics.track('file-download-start', {
-        file_id: pcb.props.rawItem.id,
-        file_name: pcb.props.rawItem.name,
-        file_size: pcb.props.rawItem.size,
-        file_type: pcb.props.type,
-        email: getUserData().email,
-        folder_id: pcb.props.rawItem.folder_id,
-        platform: 'web'
-      });
-  
-      const jwt = Settings.get("xToken");
-      const mnemonic = Settings.get("xMnemonic");
-      const user = Settings.getUser();
-      const socketId = socket.id;
-      const fileId = id
-  
-      let slices = [];
-      let progress = 0;
-      let fileName;
-      let size;
-  
-      socket.emit('get-file', { socketId, fileId, user, jwt, mnemonic });
+  handleDisconnectedSocket = async () => {
+    const reconnected = await reconnect({ wait: 10 });
+    if(reconnected) return { res: 'Reconnected' };
 
-      socket.on(`get-file-${socketId}-sending-data`, (content) => {
-        size = content.size;
-        fileName = content.fileName;
-      });
+    const isWorking = await isInternetWorking();
+    if(!isWorking) {
+      return { res: 'internet connection failed' };
+    } else {
+      return { res: 'unknown error' };
+    }
+  }
+
+  enqueue (download) {
+    return new Promise((res) => {
+      this.setState({
+        ...this.state,
+        fileDownloadQueue: [ ...this.state.fileDownloadQueue, download ]
+      }, () => res())
+    });
+  }
+
+  dequeue (download) {
+    return new Promise((res) => {
+      this.setState({
+        ...this.state,
+        fileDownloadQueue: this.state.fileDownloadQueue.filter(({ fileId }) => fileId !== download.fileId)
+      }, () => res())
+    });
+  }
+
+  wait (time) {
+    return new Promise((res) => setTimeout(() => res(), time))
+  }
+
+  handleDownloadEvents (events) {
+    return new Promise((resolve, reject) => {
+      for(const ev of events) {
+        socket.on(ev.name, () => {
+          ev.cb(arguments);
+          resolve();
+        })
+      }
+    })
+  }
+
+  downloadFileSocket = async (id, _class, pcb) => {
+    const inQueue = this.state.fileDownloadQueue.findIndex((fileId) => fileId === id) !== -1;
+
+    if(inQueue) {
+      toast.info('File is already added to downloading queue.');
+      return;
+    }
+
+    await this.enqueue({ fileId: id, pcb });
+
+    console.log(`${id} enqueued`);
+
+    const isNotMyTurn = () => this.state.fileDownloadQueue[0].fileId !== id
+    while (isNotMyTurn()) { 
+      console.log(`${id} blocked`);
+      await this.wait(2000); 
+    } 
+
+    console.log(`${new Date()} ${id} working`);
+
+    window.analytics.track('file-download-start', {
+      file_id: pcb.props.rawItem.id,
+      file_name: pcb.props.rawItem.name,
+      file_size: pcb.props.rawItem.size,
+      file_type: pcb.props.type,
+      email: getUserData().email,
+      folder_id: pcb.props.rawItem.folder_id,
+      platform: 'web'
+    });
+
+    const jwt = Settings.get("xToken");
+    const mnemonic = Settings.get("xMnemonic");
+    const user = Settings.getUser();
+    const socketId = socket.id;
+    const fileId = id
+
+    let slices = [];
+    let progress = 0;
+    let fileName;
+    let size;
+
+    console.log(`id ${id}`);
+
+    socket.emit('get-file', { socketId, fileId, user, jwt, mnemonic });
+
+    socket.on(`get-file-${socketId}-${id}-sending-data`, (content) => {
+      size = content.size;
+      fileName = content.fileName;
+    });
+
+    socket.on(`get-file-${socketId}-${id}-stream`, (chunk) => {
+      progress += (chunk.byteLength / size) * 100;
+      console.log(`progress ${progress}`);
+      pcb.setState({ progress });
+
+      slices.push(chunk);
+    })
+
+    socket.on('disconnect', async () => {
+      console.log('here')
+      const wasDownloadingThisFile = this.state.fileDownloadQueue.findIndex(fileId => id === fileId) !== 1;
+      if(wasDownloadingThisFile) {
+        const { res } = await this.handleDisconnectedSocket();
+
+        if(res !== 'Reconnected') {
+          if(res === 'unknown error') {
+            // our fail
+            window.analytics.track('file-download-error', {
+              file_id: id,
+              email: getUserData().email,
+              msg: 'lost connection with server',
+              platform: 'web'
+            });
+          }
+
+          if(res === 'internet connection failed') {
+            toast.warn('Reconnection failed. It seems that internet connection is not working');
+          }
+        } else {
+          toast.info('Reconnected')
+          // this.downloadFileSocket(id, _class, pcb);
+        }
+      }
+    });
+
+    const errEv = {
+      name: `get-file-${socketId}-error`,
+      cb: (err) => {
+        // this.endDownloadingFile({ id });
   
-      socket.on(`get-file-${socketId}-stream`, (chunk) => {
-        progress += (chunk.byteLength / size) * 100;
-        console.log(`progress ${progress}`);
-        pcb.setState({ progress });
-  
-        slices.push(chunk);
-      })
-  
-      socket.on(`get-file-${socketId}-finished`, () => {
-        console.log('finished')
-
-        const fileBlob = new Blob(slices);
-        fileDownload(fileBlob, fileName);
-        pcb.setState({ progress: 0 });
-
-        window.analytics.track('file-download-finished', {
-          file_id: id,
-          email: getUserData().email,
-          file_size: size,
-          platform: 'web'
-        });
-
-        // clean event handlers to ensure that the next time, is not firing multiple times
-        socket.off(`get-file-${socketId}-sending-data`);
-        socket.off(`get-file-${socketId}-stream`);
-        socket.off(`get-file-${socketId}-finished`);
-
-        resolve();
-      });
-
-      socket.on('disconnect', (x) => {
-        console.log('disconnect', x);
-      });
-  
-      socket.on(`get-file-${socketId}-error`, (err) => {
         window.analytics.track('file-download-error', {
           file_id: id,
           email: getUserData().email,
           msg: err.message,
           platform: 'web'
         });
-
+  
         if(parseInt(err.statusCode) === 401) {
           return history.push('/login');
         } else {
           toast.warn(`Error downloading file: \n ${err.message} \n File id: ${id}`);
         }
+  
+        return;
+      }
+    }
 
-        resolve();
-      });
+    const finishEv = {
+      name: `get-file-${socketId}-${id}-finished`,
+      cb: () => {
+        console.log('finished')
+  
+        const fileBlob = new Blob(slices);
+        fileDownload(fileBlob, fileName);
+        pcb.setState({ progress: 0 });
+  
+        window.analytics.track('file-download-finished', {
+          file_id: id,
+          email: getUserData().email,
+          file_size: size,
+          platform: 'web'
+        });
+  
+        // clean event handlers to ensure that the next time, is not firing multiple times
+        socket.off(`get-file-${socketId}-${id}-sending-data`);
+        socket.off(`get-file-${socketId}-${id}-stream`);
+        socket.off(`get-file-${socketId}-${id}-finished`);
+        return;
+      }
+    }
 
-    });
+    await this.handleDownloadEvents([errEv, finishEv]);
+    await this.dequeue({ fileId: id, pcb });
+
+    const emptyQueue = this.state.fileDownloadQueue.length === 0;
+
+    if(emptyQueue) socket.close();
   }
 
   openUploadFile = () => {
