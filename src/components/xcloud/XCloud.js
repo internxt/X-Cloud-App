@@ -558,7 +558,7 @@ class XCloud extends React.Component {
   }
 
   handleDownloadEvents (events) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       for(const ev of events) {
         socket.on(ev.name, () => {
           ev.cb(arguments);
