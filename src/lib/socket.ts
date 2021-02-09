@@ -3,4 +3,5 @@ export const socket = io(process.env.NODE_ENV === 'production' ? '' : 'http://lo
     transports: ['websocket'],
     upgrade: false,
     path: '/api/sockets', 
+    timeout: 60000
 });
