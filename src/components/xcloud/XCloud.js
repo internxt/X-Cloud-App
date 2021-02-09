@@ -25,7 +25,7 @@ import axios from 'axios'
 
 import { getUserData } from '../../lib/analytics'
 import Settings from '../../lib/settings';
-import { reconnect, socket, isInternetWorking } from '../../../src/lib/socket'
+import { socket, handleDisconnectedSocket } from '../../../src/lib/socket'
 
 class XCloud extends React.Component {
 
@@ -535,18 +535,6 @@ class XCloud extends React.Component {
     });
   };
 
-  handleDisconnectedSocket = async () => {
-    const reconnected = await reconnect({ wait: 10 });
-    if(reconnected) return { res: 'Reconnected' };
-
-    const isWorking = await isInternetWorking();
-    if(!isWorking) {
-      return { res: 'internet connection failed' };
-    } else {
-      return { res: 'unknown error' };
-    }
-  }
-
   enqueue (download) {
     return new Promise((res) => {
       this.setState({
@@ -621,8 +609,6 @@ class XCloud extends React.Component {
     let fileName;
     let size;
 
-    console.log(`id ${id}`);
-
     socket.emit('get-file', { socketId, fileId, user, jwt, mnemonic });
 
     socket.on(`get-file-${socketId}-${id}-sending-data`, (content) => {
@@ -642,14 +628,14 @@ class XCloud extends React.Component {
       const wasDownloadingThisFile = this.state.fileDownloadQueue.findIndex(fileId => id === fileId) !== -1;
 
       if(wasDownloadingThisFile) {
-        const { res } = await this.handleDisconnectedSocket();
+        const status = await handleDisconnectedSocket();
 
-        if(res === 'Reconnected') {
+        if(status === 'Reconnected') {
           toast.info('Reconnected');
           return;
         }
 
-        if(res === 'unknown error') {
+        if(status === 'server error') {
           // our fail
           window.analytics.track('file-download-error', {
             file_id: id,
@@ -661,7 +647,7 @@ class XCloud extends React.Component {
           return;
         }
 
-        if(res === 'internet connection failed') {
+        if(status === 'internet connection failed') {
           toast.warn('Reconnection failed. It seems that internet connection is not working');
           return;
         }
