@@ -574,7 +574,7 @@ class XCloud extends React.Component {
       await this.handleDisconnectedSocket();
     }
 
-    const inQueue = this.state.fileDownloadQueue.findIndex((fileId) => fileId === id) !== -1;
+    const inQueue = this.state.fileDownloadQueue.findIndex(({ fileId }) => fileId === id) !== -1;
 
     if(inQueue) {
       toast.info('File is already added to downloading queue.');
@@ -625,7 +625,7 @@ class XCloud extends React.Component {
     })
 
     socket.on('disconnect', async () => {
-      const wasDownloadingThisFile = this.state.fileDownloadQueue.findIndex(fileId => id === fileId) !== -1;
+      const wasDownloadingThisFile = this.state.fileDownloadQueue.findIndex(({ fileId }) => id === fileId) !== -1;
 
       if(wasDownloadingThisFile) {
         const status = await handleDisconnectedSocket();
