@@ -535,7 +535,6 @@ class XCloud extends React.Component {
     });
   };
 
-
   handleDisconnectedSocket = async () => {
     const reconnected = await reconnect({ wait: 10 });
     if(reconnected) return { res: 'Reconnected' };
@@ -582,6 +581,11 @@ class XCloud extends React.Component {
   }
 
   downloadFileSocket = async (id, _class, pcb) => {
+
+    if(!socket.connected) {
+      await this.handleDisconnectedSocket();
+    }
+
     const inQueue = this.state.fileDownloadQueue.findIndex((fileId) => fileId === id) !== -1;
 
     if(inQueue) {
@@ -591,15 +595,10 @@ class XCloud extends React.Component {
 
     await this.enqueue({ fileId: id, pcb });
 
-    console.log(`${id} enqueued`);
-
     const isNotMyTurn = () => this.state.fileDownloadQueue[0].fileId !== id
     while (isNotMyTurn()) { 
-      console.log(`${id} blocked`);
       await this.wait(2000); 
     } 
-
-    console.log(`${new Date()} ${id} working`);
 
     window.analytics.track('file-download-start', {
       file_id: pcb.props.rawItem.id,
@@ -640,28 +639,31 @@ class XCloud extends React.Component {
     })
 
     socket.on('disconnect', async () => {
-      console.log('here')
-      const wasDownloadingThisFile = this.state.fileDownloadQueue.findIndex(fileId => id === fileId) !== 1;
+      const wasDownloadingThisFile = this.state.fileDownloadQueue.findIndex(fileId => id === fileId) !== -1;
+
       if(wasDownloadingThisFile) {
         const { res } = await this.handleDisconnectedSocket();
 
-        if(res !== 'Reconnected') {
-          if(res === 'unknown error') {
-            // our fail
-            window.analytics.track('file-download-error', {
-              file_id: id,
-              email: getUserData().email,
-              msg: 'lost connection with server',
-              platform: 'web'
-            });
-          }
+        if(res === 'Reconnected') {
+          toast.info('Reconnected');
+          return;
+        }
 
-          if(res === 'internet connection failed') {
-            toast.warn('Reconnection failed. It seems that internet connection is not working');
-          }
-        } else {
-          toast.info('Reconnected')
-          // this.downloadFileSocket(id, _class, pcb);
+        if(res === 'unknown error') {
+          // our fail
+          window.analytics.track('file-download-error', {
+            file_id: id,
+            email: getUserData().email,
+            msg: 'lost connection with server',
+            platform: 'web'
+          });
+          toast.warn('Network busy');
+          return;
+        }
+
+        if(res === 'internet connection failed') {
+          toast.warn('Reconnection failed. It seems that internet connection is not working');
+          return;
         }
       }
     });
@@ -669,7 +671,6 @@ class XCloud extends React.Component {
     const errEv = {
       name: `get-file-${socketId}-error`,
       cb: (err) => {
-        // this.endDownloadingFile({ id });
   
         window.analytics.track('file-download-error', {
           file_id: id,
@@ -717,7 +718,10 @@ class XCloud extends React.Component {
 
     const emptyQueue = this.state.fileDownloadQueue.length === 0;
 
-    if(emptyQueue) socket.close();
+    if(emptyQueue) {
+      socket.close();
+      socket.off('disconnect');
+    }
   }
 
   openUploadFile = () => {
