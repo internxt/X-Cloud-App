@@ -571,7 +571,14 @@ class XCloud extends React.Component {
   downloadFileSocket = async (id, _class, pcb) => {
 
     if(!socket.connected) {
-      await this.handleDisconnectedSocket();
+      const status = await handleDisconnectedSocket();
+      const ourServerIsOffline = status === 'server error';
+
+      if(ourServerIsOffline) {
+        toast.warn('Network busy');
+        // prevent clients to enqueue requests, DDoSing server when turns up again
+        return;
+      }
     }
 
     const inQueue = this.state.fileDownloadQueue.findIndex(({ fileId }) => fileId === id) !== -1;
