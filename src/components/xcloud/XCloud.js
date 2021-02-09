@@ -625,7 +625,6 @@ class XCloud extends React.Component {
 
     socket.on(`get-file-${socketId}-${id}-stream`, (chunk) => {
       progress += (chunk.byteLength / size) * 100;
-      console.log(`progress ${progress}`);
       pcb.setState({ progress });
 
       slices.push(chunk);
@@ -685,8 +684,6 @@ class XCloud extends React.Component {
     const finishEv = {
       name: `get-file-${socketId}-${id}-finished`,
       cb: () => {
-        console.log('finished')
-  
         const fileBlob = new Blob(slices);
         fileDownload(fileBlob, fileName);
         pcb.setState({ progress: 0 });
