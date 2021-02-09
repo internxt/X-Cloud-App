@@ -1,3 +1,4 @@
+import axios from 'axios';
 import io from 'socket.io-client';
 export const socket = io(process.env.NODE_ENV === 'production' ? '' : 'http://localhost:8000', {
     transports: ['websocket'],
@@ -16,7 +17,7 @@ export const reconnect = ({ wait }) : Promise<boolean> => {
 
 export const isInternetWorking = async () : Promise<boolean> => {
     try {
-        await fetch('www.google.com');
+        await axios.get('https://www.google.com');
         return true;
     } catch (e) {
         return false;
