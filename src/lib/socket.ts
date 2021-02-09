@@ -23,3 +23,11 @@ export const isInternetWorking = async () : Promise<boolean> => {
         return false;
     }
 }
+
+export const handleDisconnectedSocket = async () : Promise<string> => {
+    const reconnected = await reconnect({ wait: 10 });
+    if (reconnected) return 'Reconnected';
+
+    const isWorking = await isInternetWorking();
+    return isWorking ? 'server error' : 'internet connection failed';
+} 
