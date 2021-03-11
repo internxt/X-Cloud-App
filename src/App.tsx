@@ -16,7 +16,7 @@ import Security from './components/Security';
 import { ToastContainer } from 'react-toastify';
 import Checkout from './components/Checkout';
 import Referred from './components/Referred';
-import PayToken from './components/token/PayForm';
+import PayToken from './components/token/PayFormV2';
 import Teams from './components/forms/Teams';
 import JoinTeam from './components/forms/JoinTeam';
 import DeactivationTeams from './components/forms/DeactivationTeam';

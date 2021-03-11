@@ -7,7 +7,7 @@ import Finish from './finish/Finish';
 import { getTokenInfo } from '../../services/token.service';
 import Settings from '../../lib/settings';
 import { getHeaders } from '../../lib/auth';
-
+import ConnectWallet from './connect-wallet/ConnectWallet';
 interface ResetProps {
     match?: any
     isAuthenticated: Boolean
@@ -138,6 +138,7 @@ class PayToken extends React.Component<ResetProps> {
       return <div>
         <NavigationBar navbarItems={<h5>Token</h5>} isTeam={false} isMember={false} isAdmin={false} />
         <Container className="form-main">
+          <ConnectWallet></ConnectWallet>
           {this.state.finish ?
             <Finish error={this.state.error}/>
             :
