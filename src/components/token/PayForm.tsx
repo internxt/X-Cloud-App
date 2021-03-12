@@ -136,7 +136,7 @@ class PayToken extends React.Component<ResetProps> {
       return <div>
         <NavigationBar navbarItems={<h5>Token</h5>} isTeam={false} isMember={false} isAdmin={false} />
         <Container className="form-main">
-          <ConnectWallet></ConnectWallet>
+          <ConnectWallet/>
           {this.state.finish ?
             <Finish error={this.state.error}/>
             :
