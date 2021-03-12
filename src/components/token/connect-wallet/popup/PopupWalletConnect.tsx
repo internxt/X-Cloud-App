@@ -26,7 +26,7 @@ const PopupWalletConnect = ({ onClose, open, isTeam } : PopupWalletConnectProps)
 
   const { activate } = useWeb3React();
 
-  return (<Popup open={open} onClose={onClose}>
+  return (<Popup open={open} >
     <div className="ShareContainer">
 
       <div className="ShareHeader">
@@ -39,8 +39,11 @@ const PopupWalletConnect = ({ onClose, open, isTeam } : PopupWalletConnectProps)
       </div>
 
       <div className="ShareBody">
-        <div>
-          <button onClick={ () => tryActivateWallet(WalletLink)}>Connect</button>
+        <div
+          style={styles.infoCard}
+          onClick={ () => tryActivateWallet(WalletLink)}
+        >
+          Coinbase Wallet
         </div>
       </div>
 
@@ -54,3 +57,24 @@ const PopupWalletConnect = ({ onClose, open, isTeam } : PopupWalletConnectProps)
 };
 
 export default PopupWalletConnect;
+
+const styles = {
+  infoCard: {
+    backgroundColor: 'transparent',
+    padding: '1rem',
+    outline: 'none',
+    border: '1px solid',
+    borderRadius: '12px',
+    borderColor: 'blue',
+    width: '100% !important',
+    $nest: {
+      '&:focus': {
+        boxShadow: '0 0 0 1px red'
+      }
+    },
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  }
+};

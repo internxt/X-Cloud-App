@@ -3,10 +3,30 @@ import './PayForm.scss';
 import { Container, Form, Row, Col, Button } from 'react-bootstrap';
 import NavigationBar from '../navigationBar/NavigationBar';
 import ConnectWallet from './connect-wallet/ConnectWallet';
+import Settings from '../../lib/settings';
+
+const plans = ['200GB - €3.49/month', '2TB - €8.99/month'];
+const planB = ['prepay 6 months - €3.99/month', 'prepay 12 months - €3.49/month'];
+// const totalPlanB = [3.99*6, 3.49*12];
+const planC = ['prepay 6 months - €9.49/month', 'prepay 12 months - €8.99/month'];
+// const totalPlanC = [9.49*6, 8.99*12];
 
 const PayToken = () => {
 
   const [modal, handleModal] = useState(false);
+  const [email, handleEmail] = useState(Settings.getUser().email);
+  const [plan, handlePlan] = useState(0);
+  const [lenght, handleLenght] = useState(0);
+
+  const renderSwitch = () => {
+    console.log(lenght);
+    switch (plan) {
+      case '0':
+        return planB.map((item, index) => <option value={index}>{item}</option>);
+      case '1':
+        return planC.map((item, index) => <option value={index}>{item}</option>);
+    }
+  };
 
   return (
     <div>
@@ -23,47 +43,39 @@ const PayToken = () => {
               <br/>
               Complete the crypto payment request form below and we'll email you with a crypto invoice.
             </div>
-
-            <div
-              className="referred-description py-3"
-            >
-              Market price of Internxt Tokens:
-            </div>
             <Form className="form-payment">
               <Form.Row>
-                <Form.Group as={Col} controlId="paymentType">
-                  <Form.Label>Payment Type</Form.Label>
+                <Form.Group as={Col} controlId="plan">
+                  <Form.Label>What plan would you like to pay for</Form.Label>
                   <Form.Control
                     as="select"
-                    name="currency"
+                    onChange={handlePlan}
+                    name="plan"
                   >
-                    <option>INXT</option>
+                    {plans.map((item, index) => <option value={index}>{item}</option>)}
                   </Form.Control>
                 </Form.Group>
-                <Form.Group as={Col} controlId="planSelector">
-                  <Form.Label>What plan would you like to pay for</Form.Label>
+                <Form.Group as={Col} controlId="leght">
+                  <Form.Label>How many months would you like to pay for?</Form.Label>
+                  <Form.Control
+                    as="select"
+                    onChange={handleLenght}
+                    name="lenght"
+                  >
+                    {renderSwitch}
+                  </Form.Control>
                 </Form.Group>
               </Form.Row>
 
               <Form.Row>
-                <Form.Group as={Col} controlId="email">
+                <Form.Group>
                   <Form.Label>Email Address for account to apply payment to</Form.Label>
-                </Form.Group>
-                <Form.Group as={Col} controlId="paySelector">
-                  <Form.Label>How many months would you like to pay for?</Form.Label>
-                </Form.Group>
-              </Form.Row>
-              <Form.Row>
-                <Form.Group as={Col} controlId="wallet">
-                  <Form.Label>Wallet from which you are send the INXT tokens</Form.Label>
-                </Form.Group>
-              </Form.Row>
-              <Form.Row>
-                <Form.Group as={Col} controlId="message">
-                  <Form.Label>Optionally include a message with your request</Form.Label>
                   <Form.Control
-                    as="textarea"
-                    name="message"
+                    required
+                    type="email"
+                    name="email"
+                    value={email}
+                    onChange={handleEmail}
                   />
                 </Form.Group>
               </Form.Row>
@@ -71,19 +83,19 @@ const PayToken = () => {
               <Container style={{ textAlign: 'right' }}>
                 <Row>
                   <Col sm={10}> EUR to pay:</Col>
-                  <Col> 10 €</Col>
+                  <Col> </Col>
                 </Row>
                 <Row>
                   <Col sm={10}> 10% Discount: </Col>
-                  <Col>10 €</Col>
+                  <Col> </Col>
                 </Row>
                 <Row>
                   <Col sm={10}> Total </Col>
-                  <Col> 10 €</Col>
+                  <Col> </Col>
                 </Row>
                 <Row style={{ fontSize: '25px', fontWeight: 600 }}>
                   <Col sm={10}> INXT to pay:</Col>
-                  <Col>  10 </Col>
+                  <Col> </Col>
                 </Row>
               </Container>
 
