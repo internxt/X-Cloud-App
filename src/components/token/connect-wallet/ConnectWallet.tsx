@@ -1,26 +1,29 @@
-import React from 'react';
-import PopupWalletConnect from './popup/PopupWalletConnect';
-import { Web3ReactProvider } from '@web3-react/core';
 import { Web3Provider } from '@ethersproject/providers';
+import { connectorsByName } from '../utils/tokenUtils';
+import { OptionCard } from '../option-card/OptionCard';
 
-const getLibrary = (provider : any) => {
-  const library = new Web3Provider(provider);
+class ConnectWallet {
+  
+  // function getLibrary(provider: any): Web3Provider {
+  //   const library = new Web3Provider(provider);
 
-  library.pollingInterval = 12000;
-  return library;
-};
+  //   library.pollingInterval = 12000;
+  //   return library;
+  // }
 
-const ConnectWallet = ({ modalHandler, modalOpener }) => {
+  function renderWallets() {
+    {Object.keys(connectorsByName).map(name => {
+      const currentConnector = connectorsByName[name];
+      const activating = currentConnector === activatingConnector;
+      const connected = currentConnector === connector
+      const disabled = !triedEager || !!activatingConnector || connected || !!error
 
-  return (
-    <Web3ReactProvider getLibrary={getLibrary}>
-      <PopupWalletConnect
-        isTeam={false}
-        open={modalOpener}
-        onClose={modalHandler}
-      />
-    </Web3ReactProvider>
-  );
+      return (
+        <OptionCard walletName={name}/>
+      )
+    })}
+  };
+
 };
 
 export default ConnectWallet;
