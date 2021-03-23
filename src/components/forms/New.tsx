@@ -221,7 +221,11 @@ class New extends React.Component<NewProps, NewState> {
           response.json().then((body) => {
             // Manage account already exists (error 400)
             const { message } = body;
-
+            window.analytics.track('user-signup-error', {
+              msg: message,
+              partner: 'organic',
+              status: response.status
+            })
             toast.warn(`"${message}"`);
             this.setState({ validated: false });
           });
