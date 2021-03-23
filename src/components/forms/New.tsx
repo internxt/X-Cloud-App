@@ -271,6 +271,13 @@ class New extends React.Component<NewProps, NewState> {
         body: JSON.stringify(body)
       }).then(fetchHandler).then(({ res, body }) => {
         if (res.status !== 200) {
+          window.analytics.track('user-signup-error',
+            {
+              partner: 'appsumo',
+              msg: body.error || 'Internal Server Error',
+              status: res.status
+            }
+          )
           throw Error(body.error || 'Internal Server Error');
         } else {
           return body;
