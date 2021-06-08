@@ -11,3 +11,11 @@ export function isUserActivated() {
     console.log('Error getting user activation');
   });
 }
+
+export function initialize(email: string) {
+  return fetch('/api/initialize', {
+    method: 'post',
+    headers: getHeaders(true, true),
+    body: JSON.stringify({ email, mnemonic: Settings.get('xMnemonic') })
+  });
+}

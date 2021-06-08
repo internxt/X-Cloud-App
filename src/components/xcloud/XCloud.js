@@ -25,6 +25,8 @@ import { getUserData } from '../../lib/analytics';
 import Settings from '../../lib/settings';
 
 import { Network, getEnvironmentConfig } from '../../lib/network';
+import * as userService from '../../services/user.service';
+
 class XCloud extends React.Component {
 
   state = {
@@ -118,14 +120,7 @@ class XCloud extends React.Component {
 
   userInitialization = () => {
     return new Promise((resolve, reject) => {
-      fetch('/api/initialize', {
-        method: 'post',
-        headers: getHeaders(true, true),
-        body: JSON.stringify({
-          email: this.props.user.email,
-          mnemonic: Settings.get('xMnemonic')
-        })
-      }).then((response) => {
+      userService.initialize(this.props.user.email).then((response) => {
         if (response.status === 200) {
           // Successfull intialization
           this.setState({ isInitialized: true });
