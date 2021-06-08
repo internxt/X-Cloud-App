@@ -150,18 +150,6 @@ class XCloud extends React.Component {
     });
   };
 
-  isTeamActivated = () => {
-    const team = JSON.parse(localStorage.getItem('xTeam'));
-
-    return fetch(`/api/team/isactivated/${team.bridge_user}`, {
-      method: 'get',
-      headers: getHeaders(true, false)
-    }).then((response) => response.json())
-      .catch(() => {
-        console.log('Error getting user activation');
-      });
-  }
-
   getTeamByUser = () => {
     return new Promise((resolve, reject) => {
       const user = JSON.parse(localStorage.getItem('xUser'));
