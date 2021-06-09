@@ -26,9 +26,9 @@ import Settings from '../../lib/settings';
 
 import { Network, getEnvironmentConfig } from '../../lib/network';
 import * as userService from '../../services/user.service';
-import { storeTeamsInfo } from '../../services/teams.service';
-import { getWelcomeFile } from '../../services/file.service';
-import { getContentFolderService } from '../../services/folder.service';
+import * as teamsService from '../../services/teams.service';
+import * as filesService from '../../services/file.service';
+import * as foldersSerivice from '../../services/folder.service';
 class XCloud extends React.Component {
 
   state = {
@@ -55,14 +55,7 @@ class XCloud extends React.Component {
   moveEvent = {};
 
   componentDidMount = () => {
-    if (isMobile) {
-      if (isAndroid) {
-        window.location.href = 'https://play.google.com/store/apps/details?id=com.internxt.cloud';
-      } else if (isIOS) {
-        window.location.href = 'https://apps.apple.com/us/app/internxt-drive-secure-file-storage/id1465869889';
-      }
-    }
-
+    this.redirectForMobile();
     // When user is not signed in, redirect to login
     if (!this.props.user || !this.props.isAuthenticated) {
       history.push('/login');
@@ -80,7 +73,7 @@ class XCloud extends React.Component {
         });
       } else {
         console.log('getFolderContent 4');
-        storeTeamsInfo().finally(() => {
+        teamsService.storeTeamsInfo().finally(() => {
           if (Settings.exists('xTeam') && !this.state.isTeam && Settings.get('workspace') === 'teams') {
             this.handleChangeWorkspace();
           } else {
@@ -131,6 +124,16 @@ class XCloud extends React.Component {
     this.setState({ isTeam: isTeam }, () => {
       Settings.set('workspace', isTeam ? 'teams' : 'individual');
     });
+  }
+
+  redirectForMobile = () => {
+    if (isMobile) {
+      if (isAndroid) {
+        window.location.href = 'https://play.google.com/store/apps/details?id=com.internxt.cloud';
+      } else if (isIOS) {
+        window.location.href = 'https://apps.apple.com/us/app/internxt-drive-secure-file-storage/id1465869889';
+      }
+    }
   }
 
   userInitialization = () => {
@@ -487,8 +490,8 @@ class XCloud extends React.Component {
   getContentFolder = async (rootId, updateNamePath = true, showLoading = true, isTeam = false) => {
     try {
       await new Promise((resolve) => this.setState({ isLoading: showLoading }, () => resolve()));
-      await getWelcomeFile();
-      const content = await getContentFolderService(rootId, isTeam);
+      await filesService.getWelcomeFile();
+      const content = await foldersSerivice.getContentFolderService(rootId, isTeam);
 
       this.deselectAll();
 
