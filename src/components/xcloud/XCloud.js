@@ -253,6 +253,41 @@ class XCloud extends React.Component {
     }
   };
 
+  createFolder1 = async () => {
+    try {
+      let folderName = prompt('Please enter folder name');
+
+      if (folderName && folderName !== '') {
+
+        const newNameIfExists = this.renameIfExistsFolders(folderName);
+
+        if (newNameIfExists !== undefined) {
+          folderName = newNameIfExists;
+        }
+
+        const cratedFolder = await foldersSerivice.createFolder(this.state.isTeam, this.state.currentFolderId, folderName);
+
+        if (cratedFolder) {
+          window.analytics.track('folder-created', {
+            email: getUserData().email,
+            platform: 'web'
+          });
+          this.getContentFolder(this.state.currentFolderId, false, true, this.state.isTeam);
+        }
+      }
+    } catch (err) {
+      console.log(err);
+      toast.warn(`Error creating folder ${err}`);
+    }
+  }
+
+  renameIfExistsFolders = (newFolderName) => {
+    if (this.folderNameExists(newFolderName)) {
+      newFolderName = this.getNewName(newFolderName);
+    }
+    return newFolderName;
+  }
+
   folderNameExists = (folderName) => {
     return this.state.currentCommanderItems.find(
       (item) => item.isFolder && item.name === folderName
