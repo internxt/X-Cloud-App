@@ -74,19 +74,7 @@ class XCloud extends React.Component {
       } else {
         console.log('getFolderContent 4');
         teamsService.storeTeamsInfo().finally(() => {
-          if (Settings.exists('xTeam') && !this.state.isTeam && Settings.get('workspace') === 'teams') {
-            this.handleChangeWorkspace();
-          } else {
-            this.getContentFolder(this.props.user.root_folder_id);
-            this.setState({ currentFolderId: this.props.user.root_folder_id });
-          }
-          const team = Settings.getTeams();
-
-          if (team && !team.root_folder_id) {
-            this.setState({ currentFolderId: this.props.user.root_folder_id });
-          }
-
-          this.setState({ isInitialized: true });
+          this.setCurrentFolderId();
         }).catch(() => {
           Settings.del('xTeam');
           this.setState({
@@ -94,9 +82,24 @@ class XCloud extends React.Component {
           });
         });
       }
-
     }
   };
+
+  setCurrentFolderId = () => {
+    if (Settings.exists('xTeam') && !this.state.isTeam && Settings.get('workspace') === 'teams') {
+      this.handleChangeWorkspace();
+    } else {
+      this.getContentFolder(this.props.user.root_folder_id);
+      this.setState({ currentFolderId: this.props.user.root_folder_id });
+    }
+    const team = Settings.getTeams();
+
+    if (team && !team.root_folder_id) {
+      this.setState({ currentFolderId: this.props.user.root_folder_id });
+    }
+
+    this.setState({ isInitialized: true });
+  }
 
   handleChangeWorkspace = () => {
     const xTeam = Settings.getTeams();
