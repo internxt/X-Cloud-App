@@ -154,11 +154,8 @@ export async function createFolder(isTeam: boolean, currentFolderId: number, fol
     const createdFolder = await fetchCreateFolder.json();
 
     if (fetchCreateFolder.status !== 201) {
-
-      throw createdFolder.error ? createdFolder.error : 'createFolder error';
+      throw new Error (`The folder cannot be created ${fetchCreateFolder.status}`);
     }
-
-    console.log('createdFolder', createdFolder);
     return createdFolder;
 
   } catch (err) {
