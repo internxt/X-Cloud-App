@@ -13,8 +13,8 @@ export async function getKeys(mail: string) {
   return fetch(`/api/user/keys/${mail}`, {
     method: 'GET',
     headers: getHeaders(true, false)
-  }).then(async(res) =>{
-    if (res.status === 400){
+  }).then(async (res) => {
+    if (res.status === 400) {
       const res1 = await res.json();
 
       throw res1;
@@ -25,6 +25,20 @@ export async function getKeys(mail: string) {
     }
     return res.json();
   });
+}
+
+export function isTeamActivated() {
+  const team = Settings.getTeams();
+
+  return fetch(`/api/team/isactivated/${team.bridge_user}`, {
+    method: 'get',
+    headers: getHeaders(true, false)
+  }).then((response) => {
+    return response.json();
+  })
+    .catch(() => {
+      console.log('Error getting team activation');
+    });
 }
 
 export async function storeTeamsInfo() {
