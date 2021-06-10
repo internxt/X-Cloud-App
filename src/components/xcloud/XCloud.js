@@ -187,34 +187,6 @@ class XCloud extends React.Component {
     }
   };
 
-  getTeamByUser = () => {
-    return new Promise((resolve, reject) => {
-      const user = JSON.parse(localStorage.getItem('xUser'));
-
-      fetch(`/api/teams-members/${user.email}`, {
-        method: 'get',
-        headers: getHeaders(true, false)
-      }).then((result) => {
-        if (result.status !== 200) {
-          return;
-        }
-        return result.json();
-      }).then(result => {
-        if (result.admin === user.email) {
-          result.rol = 'admin';
-          this.setState({ isAdmin: true, isMember: false });
-        } else {
-          result.rol = 'member';
-          this.setState({ isAdmin: false, isMember: true });
-        }
-        resolve(result);
-      }).catch(err => {
-        console.log(err);
-        reject(err);
-      });
-    });
-  }
-
   setSortFunction = (newSortFunc) => {
     // Set new sort function on state and call getFolderContent for refresh files list
     this.setState({ sortFunction: newSortFunc });
