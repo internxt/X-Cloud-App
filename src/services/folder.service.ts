@@ -3,6 +3,7 @@ import _ from 'lodash';
 import { deleteWelcomeFile, openWelcomeFile, getWelcomeFile } from './file.service';
 import Settings from '../lib/settings';
 import history from '../lib/history';
+import * as trackServices from './tracks.service';
 interface IFolders {
   bucket: string
   color: string
@@ -174,4 +175,33 @@ export function updateMetaData(data: any, itemId: number, isTeam: boolean) {
     .catch((err) => {
       throw new Error(`Cannot update metadata folder ${err}`);
     });
+}
+
+export function deleteItems(isTeam: boolean, selectedItems: any[]) {
+  const fetchOptions = {
+    method: 'DELETE',
+    headers: getHeaders(true, false, isTeam)
+  };
+
+  if (selectedItems.length === 0) {
+    return;
+  }
+
+  return _.map(selectedItems, (v) => {
+    if (v.onDelete) {
+      return (next) => {
+        v.onDelete(); next();
+      };
+    }
+    const url = v.isFolder
+      ? `/api/storage/folder/${v.id}`
+      : `/api/storage/folder/${v.folderId}/file/${v.id}`;
+
+    return (next) =>
+      fetch(url, fetchOptions).then(() => {
+        trackServices.tracksDeleteItems(v);
+        next();
+      }).catch(next);
+  });
+
 }

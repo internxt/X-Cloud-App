@@ -1100,6 +1100,21 @@ class XCloud extends React.Component {
     });
   };
 
+  confirmDeleteItems1 = () => {
+    const selectedItems = this.getSelectedItems();
+
+    const deletionRequests = foldersService.deleteItems(this.state.isTeam, selectedItems);
+
+    async.parallel(deletionRequests, (err, result) => {
+      if (err) {
+        throw err;
+      } else {
+        console.log('getFolderContent 16');
+        this.getContentFolder(this.state.currentFolderId, false, true, this.state.isTeam);
+      }
+    });
+  };
+
   selectItems = (items, isFolder, unselectOthers = true) => {
     if (typeof items === 'number') {
       items = [items];
