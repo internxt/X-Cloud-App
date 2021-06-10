@@ -56,6 +56,10 @@ class XCloud extends React.Component {
 
   componentDidMount = () => {
     this.redirectForMobile();
+    this.startFileExplorer();
+  };
+
+  startFileExplorer = () => {
     // When user is not signed in, redirect to login
     if (!this.props.user || !this.props.isAuthenticated) {
       history.push('/login');
@@ -75,7 +79,7 @@ class XCloud extends React.Component {
         });
       }
     }
-  };
+  }
 
   setCurrentFolderId = () => {
     if (Settings.exists('xTeam') && !this.state.isTeam && Settings.get('workspace') === 'teams') {
