@@ -62,15 +62,7 @@ class XCloud extends React.Component {
     } else {
       if (!this.props.user.root_folder_id) {
         // Initialize user in case that is not done yet
-        this.userInitialization().then((resultId) => {
-          console.log('getFolderContent 3');
-          this.getContentFolder(resultId);
-        }).catch((error) => {
-          const errorMsg = error ? error : '';
-
-          toast.warn('User initialization error ' + errorMsg);
-          history.push('/login');
-        });
+        this.initializeUser();
       } else {
         console.log('getFolderContent 4');
         teamsService.storeTeamsInfo().finally(() => {
@@ -164,6 +156,35 @@ class XCloud extends React.Component {
           reject(error);
         });
     });
+  };
+
+  initializeUser = () => {
+    this.userInitialization1().then((resultId) => {
+      console.log('getFolderContent 3');
+      this.getContentFolder(resultId);
+    }).catch((error) => {
+      const errorMsg = error ? error : '';
+
+      toast.warn('User initialization error ' + errorMsg);
+      history.push('/login');
+    });
+  }
+
+  userInitialization1 = async () => {
+    try {
+      const initializedUser = await userService.initialize(this.props.user.email);
+
+      if (initializedUser) {
+        this.setState({ isInitialized: true });
+        let updatedUser = this.props.user;
+
+        updatedUser.root_folder_id = initializedUser.user.root_folder_id;
+        this.props.handleKeySaved(updatedUser);
+        this.getContentFolder(initializedUser.user.root_folder_id);
+      }
+    } catch (err) {
+      throw new Error(err);
+    }
   };
 
   getTeamByUser = () => {
