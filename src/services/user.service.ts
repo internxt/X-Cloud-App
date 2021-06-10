@@ -17,5 +17,12 @@ export function initialize(email: string) {
     method: 'post',
     headers: getHeaders(true, true),
     body: JSON.stringify({ email, mnemonic: Settings.get('xMnemonic') })
+  }).then((user)=> {
+    if (user.status !== 200) {
+      throw new Error (`The user cannot be initalized ${user.status} status`);
+    }
+    return user.json();
+  }).catch((err)=>{
+    throw new Error (`The user cannot be initalized ${err} status`);
   });
 }
