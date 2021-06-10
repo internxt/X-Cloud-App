@@ -649,6 +649,42 @@ class XCloud extends React.Component {
     }
   };
 
+  updateMeta1 = async (metadata, itemId, isFolder) => {
+    try {
+      // Apply changes on metadata depending on type of item
+      const data = JSON.stringify({ metadata });
+
+      if (isFolder) {
+        const updatedMetaFolder = await foldersSerivice.updateMetaData(data, itemId, this.state.isTeam);
+
+        if (updatedMetaFolder) {
+          window.analytics.track('file-rename', {
+            file_id: itemId,
+            email: getUserData().email,
+            platform: 'web'
+          });
+          console.log('getFolderContent 13');
+          this.getContentFolder(this.state.currentFolderId, false, true, this.state.isTeam);
+        }
+
+      } else {
+        const updatedMetaFile = await filesService.updateMetaData(data, itemId, this.state.isTeam);
+
+        if (updatedMetaFile) {
+          window.analytics.track('file-rename', {
+            file_id: itemId,
+            email: getUserData().email,
+            platform: 'web'
+          });
+          console.log('getFolderContent 13');
+          this.getContentFolder(this.state.currentFolderId, false, true, this.state.isTeam);
+        }
+      }
+    } catch (err) {
+      toast.warn(err);
+    }
+  };
+
   clearMoveOpEvent = (moveOpId) => {
     delete this.moveEvent[moveOpId];
   };

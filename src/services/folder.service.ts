@@ -154,11 +154,24 @@ export async function createFolder(isTeam: boolean, currentFolderId: number, fol
     const createdFolder = await fetchCreateFolder.json();
 
     if (fetchCreateFolder.status !== 201) {
-      throw new Error (`The folder cannot be created ${fetchCreateFolder.status}`);
+      throw new Error(`The folder cannot be created ${fetchCreateFolder.status}`);
     }
     return createdFolder;
 
   } catch (err) {
-    throw new Error (`The folder cannot be created ${err}`);
+    throw new Error(`The folder cannot be created ${err}`);
   }
+}
+
+export function updateMetaData(data: any, itemId: number, isTeam: boolean) {
+
+  return fetch(`/api/storage/folder/${itemId}/meta`, {
+    method: 'post',
+    headers: getHeaders(true, true, isTeam),
+    body: data
+  })
+    .then()
+    .catch((err) => {
+      throw new Error(`Cannot update metadata folder ${err}`);
+    });
 }
