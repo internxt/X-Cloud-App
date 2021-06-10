@@ -62,31 +62,11 @@ class XCloud extends React.Component {
     } else {
       if (!this.props.user.root_folder_id) {
         // Initialize user in case that is not done yet
-        this.userInitialization().then((resultId) => {
-          console.log('getFolderContent 3');
-          this.getContentFolder(resultId);
-        }).catch((error) => {
-          const errorMsg = error ? error : '';
-
-          toast.warn('User initialization error ' + errorMsg);
-          history.push('/login');
-        });
+        this.initializeUser();
       } else {
         console.log('getFolderContent 4');
         teamsService.storeTeamsInfo().finally(() => {
-          if (Settings.exists('xTeam') && !this.state.isTeam && Settings.get('workspace') === 'teams') {
-            this.handleChangeWorkspace();
-          } else {
-            this.getContentFolder(this.props.user.root_folder_id);
-            this.setState({ currentFolderId: this.props.user.root_folder_id });
-          }
-          const team = Settings.getTeams();
-
-          if (team && !team.root_folder_id) {
-            this.setState({ currentFolderId: this.props.user.root_folder_id });
-          }
-
-          this.setState({ isInitialized: true });
+          this.setCurrentFolderId();
         }).catch(() => {
           Settings.del('xTeam');
           this.setState({
@@ -94,9 +74,24 @@ class XCloud extends React.Component {
           });
         });
       }
-
     }
   };
+
+  setCurrentFolderId = () => {
+    if (Settings.exists('xTeam') && !this.state.isTeam && Settings.get('workspace') === 'teams') {
+      this.handleChangeWorkspace();
+    } else {
+      this.getContentFolder(this.props.user.root_folder_id);
+      this.setState({ currentFolderId: this.props.user.root_folder_id });
+    }
+    const team = Settings.getTeams();
+
+    if (team && !team.root_folder_id) {
+      this.setState({ currentFolderId: this.props.user.root_folder_id });
+    }
+
+    this.setState({ isInitialized: true });
+  }
 
   handleChangeWorkspace = () => {
     const xTeam = Settings.getTeams();
@@ -161,6 +156,35 @@ class XCloud extends React.Component {
           reject(error);
         });
     });
+  };
+
+  initializeUser = () => {
+    this.userInitialization1().then((resultId) => {
+      console.log('getFolderContent 3');
+      this.getContentFolder(resultId);
+    }).catch((error) => {
+      const errorMsg = error ? error : '';
+
+      toast.warn('User initialization error ' + errorMsg);
+      history.push('/login');
+    });
+  }
+
+  userInitialization1 = async () => {
+    try {
+      const initializedUser = await userService.initialize(this.props.user.email);
+
+      if (initializedUser) {
+        this.setState({ isInitialized: true });
+        let updatedUser = this.props.user;
+
+        updatedUser.root_folder_id = initializedUser.user.root_folder_id;
+        this.props.handleKeySaved(updatedUser);
+        this.getContentFolder(initializedUser.user.root_folder_id);
+      }
+    } catch (err) {
+      throw new Error(err);
+    }
   };
 
   getTeamByUser = () => {
@@ -249,6 +273,41 @@ class XCloud extends React.Component {
       toast.warn('Invalid folder name');
     }
   };
+
+  createFolder1 = async () => {
+    try {
+      let folderName = prompt('Please enter folder name');
+
+      if (folderName && folderName !== '') {
+
+        const newNameIfExists = this.renameIfExistsFolders(folderName);
+
+        if (newNameIfExists !== undefined) {
+          folderName = newNameIfExists;
+        }
+
+        const cratedFolder = await foldersSerivice.createFolder(this.state.isTeam, this.state.currentFolderId, folderName);
+
+        if (cratedFolder) {
+          window.analytics.track('folder-created', {
+            email: getUserData().email,
+            platform: 'web'
+          });
+          this.getContentFolder(this.state.currentFolderId, false, true, this.state.isTeam);
+        }
+      }
+    } catch (err) {
+      console.log(err);
+      toast.warn(`Error creating folder ${err}`);
+    }
+  }
+
+  renameIfExistsFolders = (newFolderName) => {
+    if (this.folderNameExists(newFolderName)) {
+      newFolderName = this.getNewName(newFolderName);
+    }
+    return newFolderName;
+  }
 
   folderNameExists = (folderName) => {
     return this.state.currentCommanderItems.find(
@@ -371,6 +430,36 @@ class XCloud extends React.Component {
     });
   };
 
+  createFolderByName1 = async (folder, parentFolderId) => {
+    let folderName = folder.name;
+
+    // No parent id implies is a directory created on the current folder, so let's show a spinner
+    if (!parentFolderId) {
+      let itemsFileExplorer;
+
+      const newFolderNameIfExists = this.renameIfExistsFolders(folderName);
+
+      if (newFolderNameIfExists !== undefined) {
+        folderName = newFolderNameIfExists;
+      }
+
+      itemsFileExplorer = this.state.currentCommanderItems;
+      itemsFileExplorer.push({
+        name: folderName,
+        isLoading: true,
+        isFolder: true
+      });
+
+      this.setState({ currentCommanderItems: itemsFileExplorer });
+    } else {
+      folderName = this.getNewName(folderName);
+    }
+
+    parentFolderId = parentFolderId || this.state.currentFolderId;
+
+    return foldersSerivice.createFolder(this.state.isTeam, parentFolderId, folderName);
+  };
+  
   openFolder = (e) => {
     return new Promise((resolve) => {
       console.log('getFolderContent 11');
@@ -578,6 +667,42 @@ class XCloud extends React.Component {
         .catch((error) => {
           console.log(`Error during file customization. Error: ${error} `);
         });
+    }
+  };
+
+  updateMeta1 = async (metadata, itemId, isFolder) => {
+    try {
+      // Apply changes on metadata depending on type of item
+      const data = JSON.stringify({ metadata });
+
+      if (isFolder) {
+        const updatedMetaFolder = await foldersSerivice.updateMetaData(data, itemId, this.state.isTeam);
+
+        if (updatedMetaFolder) {
+          window.analytics.track('file-rename', {
+            file_id: itemId,
+            email: getUserData().email,
+            platform: 'web'
+          });
+          console.log('getFolderContent 13');
+          this.getContentFolder(this.state.currentFolderId, false, true, this.state.isTeam);
+        }
+
+      } else {
+        const updatedMetaFile = await filesService.updateMetaData(data, itemId, this.state.isTeam);
+
+        if (updatedMetaFile) {
+          window.analytics.track('file-rename', {
+            file_id: itemId,
+            email: getUserData().email,
+            platform: 'web'
+          });
+          console.log('getFolderContent 13');
+          this.getContentFolder(this.state.currentFolderId, false, true, this.state.isTeam);
+        }
+      }
+    } catch (err) {
+      toast.warn(err);
     }
   };
 

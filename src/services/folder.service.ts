@@ -3,7 +3,7 @@ import _ from 'lodash';
 import { deleteWelcomeFile, openWelcomeFile, getWelcomeFile } from './file.service';
 import Settings from '../lib/settings';
 import history from '../lib/history';
- interface IFolders {
+interface IFolders {
   bucket: string
   color: string
   createdAt: Date
@@ -12,10 +12,6 @@ import history from '../lib/history';
   iconId: any
   icon_id: any
   id: number
-  isDownloading: boolean
-  isFolder: boolean
-  isLoading: boolean
-  isSelected: boolean
   name: string
   parentId: number
   parent_id: number
@@ -39,7 +35,7 @@ import history from '../lib/history';
 //   type: string
 //   updatedAt: Date
 // }
- interface IChildrens {
+interface IChildrens {
   bucket: string
   color: string
   createdAt: Date
@@ -55,7 +51,17 @@ import history from '../lib/history';
   userId: number
   user_id: number
 }
- interface IContentFolder {
+
+interface ICreatedFolder {
+  bucket: string
+  id: number
+  name: string
+  parentId: number
+  updatedAt: Date
+  userId: number
+}
+
+interface IContentFolder {
   bucket: string
   children: IChildrens[]
   color: string
@@ -133,4 +139,39 @@ export async function getContentFolderService(rootId: string, isTeam: boolean) {
     }
     throw err;
   }
+}
+
+export async function createFolder(isTeam: boolean, currentFolderId: number, folderName: string): Promise<ICreatedFolder[]> {
+  try {
+    const fetchCreateFolder = await fetch('/api/storage/folder', {
+      method: 'post',
+      headers: getHeaders(true, true, isTeam),
+      body: JSON.stringify({
+        parentFolderId: currentFolderId,
+        folderName
+      })
+    });
+    const createdFolder = await fetchCreateFolder.json();
+
+    if (fetchCreateFolder.status !== 201) {
+      throw new Error(`The folder cannot be created ${fetchCreateFolder.status}`);
+    }
+    return createdFolder;
+
+  } catch (err) {
+    throw new Error(`The folder cannot be created ${err}`);
+  }
+}
+
+export function updateMetaData(data: any, itemId: number, isTeam: boolean) {
+
+  return fetch(`/api/storage/folder/${itemId}/meta`, {
+    method: 'post',
+    headers: getHeaders(true, true, isTeam),
+    body: data
+  })
+    .then()
+    .catch((err) => {
+      throw new Error(`Cannot update metadata folder ${err}`);
+    });
 }
