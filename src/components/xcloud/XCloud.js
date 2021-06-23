@@ -28,7 +28,8 @@ import { Network, getEnvironmentConfig } from '../../lib/network';
 import * as userService from '../../services/user.service';
 import * as teamsService from '../../services/teams.service';
 import * as filesService from '../../services/file.service';
-import * as foldersSerivice from '../../services/folder.service';
+import * as foldersService from '../../services/folder.service';
+import * as tracksService from '../../services/tracks.service';
 class XCloud extends React.Component {
 
   state = {
@@ -135,35 +136,8 @@ class XCloud extends React.Component {
     }
   }
 
-  userInitialization = () => {
-    return new Promise((resolve, reject) => {
-      userService.initialize(this.props.user.email).then((response) => {
-        if (response.status === 200) {
-          // Successfull intialization
-          this.setState({ isInitialized: true });
-          // Set user with new root folder id
-          response.json().then((body) => {
-            let updatedUser = this.props.user;
-
-            updatedUser.root_folder_id = body.user.root_folder_id;
-            this.props.handleKeySaved(updatedUser);
-            resolve(body.user.root_folder_id);
-          });
-        } else {
-          reject(null);
-        }
-      }).then(folderId => {
-        console.log('getFolderContent 7');
-        this.getContentFolder(folderId);
-      })
-        .catch((error) => {
-          reject(error);
-        });
-    });
-  };
-
   initializeUser = () => {
-    this.userInitialization1().then((resultId) => {
+    this.userInitialization().then((resultId) => {
       console.log('getFolderContent 3');
       this.getContentFolder(resultId);
     }).catch((error) => {
@@ -174,7 +148,7 @@ class XCloud extends React.Component {
     });
   }
 
-  userInitialization1 = async () => {
+  userInitialization = async () => {
     try {
       const initializedUser = await userService.initialize(this.props.user.email);
 
@@ -214,43 +188,7 @@ class XCloud extends React.Component {
     this.getContentFolder(this.state.currentFolderId, false, true, this.state.isTeam);
   };
 
-  createFolder = () => {
-    const folderName = prompt('Please enter folder name');
-
-    if (folderName && folderName !== '') {
-      fetch('/api/storage/folder', {
-        method: 'post',
-        headers: getHeaders(true, true, this.state.isTeam),
-        body: JSON.stringify({
-          parentFolderId: this.state.currentFolderId,
-          folderName,
-          teamId: _.last(this.state.namePath) && _.last(this.state.namePath).hasOwnProperty('id_team') ? _.last(this.state.namePath).id_team : null
-        })
-      }).then(async (res) => {
-        if (res.status !== 201) {
-          const body = await res.json();
-
-          throw body.error ? body.error : 'createFolder error';
-        }
-        window.analytics.track('folder-created', {
-          email: getUserData().email,
-          platform: 'web'
-        });
-        console.log('getFolderContent 10');
-        this.getContentFolder(this.state.currentFolderId, false, true, this.state.isTeam);
-      }).catch((err) => {
-        if (err.includes('already exists')) {
-          toast.warn('Folder with same name already exists');
-        } else {
-          toast.warn(`"${err}"`);
-        }
-      });
-    } else {
-      toast.warn('Invalid folder name');
-    }
-  };
-
-  createFolder1 = async () => {
+  createFolder = async () => {
     try {
       let folderName = prompt('Please enter folder name');
 
@@ -262,7 +200,7 @@ class XCloud extends React.Component {
           folderName = newNameIfExists;
         }
 
-        const cratedFolder = await foldersSerivice.createFolder(this.state.isTeam, this.state.currentFolderId, folderName);
+        const cratedFolder = await foldersService.createFolder(this.state.isTeam, this.state.currentFolderId, folderName);
 
         if (cratedFolder) {
           window.analytics.track('folder-created', {
@@ -359,54 +297,7 @@ class XCloud extends React.Component {
     return this.getNewFolderName(name);
   };
 
-  createFolderByName = (folderName, parentFolderId) => {
-    let newFolderName = folderName;
-
-    // No parent id implies is a directory created on the current folder, so let's show a spinner
-    if (!parentFolderId) {
-      let __currentCommanderItems;
-
-      if (this.folderNameExists(newFolderName)) {
-        newFolderName = this.getNewName(newFolderName);
-      }
-      __currentCommanderItems = this.state.currentCommanderItems;
-      __currentCommanderItems.push({
-        name: newFolderName,
-        isLoading: true,
-        isFolder: true
-      });
-
-      this.setState({ currentCommanderItems: __currentCommanderItems });
-    } else {
-      newFolderName = this.getNewName(newFolderName);
-    }
-
-    parentFolderId = parentFolderId || this.state.currentFolderId;
-
-    return new Promise((resolve, reject) => {
-      fetch('/api/storage/folder', {
-        method: 'post',
-        headers: getHeaders(true, true, this.state.isTeam),
-        body: JSON.stringify({
-          parentFolderId,
-          folderName: newFolderName,
-          teamId: _.last(this.state.namePath) && _.last(this.state.namePath).hasOwnProperty('id_team') ? _.last(this.state.namePath).id_team : null
-        })
-      })
-        .then(async (res) => {
-          const data = await res.json();
-
-          if (res.status !== 201) {
-            throw data;
-          }
-          return data;
-        })
-        .then(resolve)
-        .catch(reject);
-    });
-  };
-
-  createFolderByName1 = async (folder, parentFolderId) => {
+  createFolderByName = async (folder, parentFolderId) => {
     let folderName = folder.name;
 
     // No parent id implies is a directory created on the current folder, so let's show a spinner
@@ -433,9 +324,9 @@ class XCloud extends React.Component {
 
     parentFolderId = parentFolderId || this.state.currentFolderId;
 
-    return foldersSerivice.createFolder(this.state.isTeam, parentFolderId, folderName);
+    return foldersService.createFolder(this.state.isTeam, parentFolderId, folderName);
   };
-  
+
   openFolder = (e) => {
     return new Promise((resolve) => {
       console.log('getFolderContent 11');
@@ -444,119 +335,11 @@ class XCloud extends React.Component {
     });
   };
 
-  // getFolderContent = async (rootId, updateNamePath = true, showLoading = true, isTeam = false) => {
-  //   await new Promise((resolve) => this.setState({ isLoading: showLoading }, () => resolve()));
-
-  //   let welcomeFile = await fetch('/api/welcome', {
-  //     method: 'get',
-  //     headers: getHeaders(true, false, isTeam)
-  //   }).then(res => res.json())
-  //     .then(body => body.file_exists)
-  //     .catch(() => false);
-
-  //   return fetch(`/api/storage/folder/${rootId}`, {
-  //     method: 'get',
-  //     headers: getHeaders(true, true, isTeam)
-  //   }).then((res) => {
-  //     if (res.status !== 200) {
-  //       throw res;
-  //     } else {
-  //       return res.json();
-  //     }
-  //   }).then(async (data) => {
-  //     this.deselectAll();
-
-  //     // Set new items list
-  //     let newCommanderFolders = _.map(data.children, (o) =>
-  //       _.extend({ isFolder: true, isSelected: false, isLoading: false, isDowloading: false }, o)
-  //     );
-
-  //     let newCommanderFiles = data.files;
-
-  //     // Apply search function if is set
-
-  //     if (this.state.searchFunction) {
-  //       newCommanderFolders = newCommanderFolders.filter(this.state.searchFunction);
-  //       newCommanderFiles = newCommanderFiles.filter(this.state.searchFunction);
-  //     }
-
-  //     // Apply sort function if is set
-  //     if (this.state.sortFunction) {
-  //       newCommanderFolders.sort(this.state.sortFunction);
-  //       newCommanderFiles.sort(this.state.sortFunction);
-  //     }
-
-  //     if (!data.parentId && welcomeFile) {
-  //       newCommanderFiles = _.concat([{
-  //         id: 0,
-  //         file_id: '0',
-  //         fileId: '0',
-  //         name: 'Welcome',
-  //         type: 'pdf',
-  //         size: 0,
-  //         isDraggable: false,
-  //         get onClick() {
-  //           return () => {
-  //             window.analytics.track('file-welcome-open');
-  //             return fetch('/Internxt.pdf').then(res => res.blob()).then(obj => {
-  //               fileDownload(obj, 'Welcome.pdf');
-  //             });
-  //           };
-  //         },
-  //         onDelete: async () => {
-  //           window.analytics.track('file-welcome-delete');
-  //           return fetch('/api/welcome', {
-  //             method: 'delete',
-  //             headers: getHeaders(true, false, isTeam)
-  //           }).catch(err => {
-  //             console.error('Cannot delete welcome file, reason: %s', err.message);
-  //           });
-  //         }
-  //       }], newCommanderFiles);
-  //     }
-
-  //     this.setState({
-  //       currentCommanderItems: _.concat(newCommanderFolders, newCommanderFiles),
-  //       currentFolderId: data.id,
-  //       currentFolderBucket: data.bucket,
-  //       isLoading: false
-  //     });
-
-  //     if (updateNamePath) {
-  //       // Only push path if it is not the same as actual path
-  //       if (
-  //         this.state.namePath.length === 0 ||
-  //         this.state.namePath[this.state.namePath.length - 1].id !== data.id
-  //       ) {
-  //         let folderName = '';
-
-  //         folderName = this.props.user.root_folder_id === data.id ? 'All Files' : data.name;
-
-  //         this.setState({
-  //           namePath: this.pushNamePath({
-  //             name: folderName,
-  //             id: data.id,
-  //             bucket: data.bucket,
-  //             id_team: data.id_team
-  //           }),
-  //           isAuthorized: true
-  //         });
-  //       }
-  //     }
-  //   })
-  //     .catch((err) => {
-  //       if (err.status === 401) {
-  //         Settings.clear();
-  //         history.push('/login');
-  //       }
-  //     });
-  // };
-
   getContentFolder = async (rootId, updateNamePath = true, showLoading = true, isTeam = false) => {
     try {
       await new Promise((resolve) => this.setState({ isLoading: showLoading }, () => resolve()));
       await filesService.getWelcomeFile();
-      const content = await foldersSerivice.getContentFolderService(rootId, isTeam);
+      const content = await foldersService.getContentFolderService(rootId, isTeam);
 
       this.deselectAll();
 
@@ -603,56 +386,13 @@ class XCloud extends React.Component {
     }
   }
 
-  updateMeta = (metadata, itemId, isFolder) => {
-    // Apply changes on metadata depending on type of item
-    const data = JSON.stringify({ metadata });
-
-    if (isFolder) {
-      fetch(`/api/storage/folder/${itemId}/meta`, {
-        method: 'post',
-        headers: getHeaders(true, true, this.state.isTeam),
-        body: data
-      })
-        .then(() => {
-          window.analytics.track('folder-rename', {
-            email: getUserData().email,
-            fileId: itemId,
-            platform: 'web'
-          });
-          console.log('getFolderContent 12');
-          this.getContentFolder(this.state.currentFolderId, false, true, this.state.isTeam);
-        })
-        .catch((error) => {
-          console.log(`Error during folder customization. Error: ${error} `);
-        });
-    } else {
-      fetch(`/api/storage/file/${itemId}/meta`, {
-        method: 'post',
-        headers: getHeaders(true, true, this.state.isTeam),
-        body: data
-      })
-        .then(() => {
-          window.analytics.track('file-rename', {
-            file_id: itemId,
-            email: getUserData().email,
-            platform: 'web'
-          });
-          console.log('getFolderContent 13');
-          this.getContentFolder(this.state.currentFolderId, false, true, this.state.isTeam);
-        })
-        .catch((error) => {
-          console.log(`Error during file customization. Error: ${error} `);
-        });
-    }
-  };
-
-  updateMeta1 = async (metadata, itemId, isFolder) => {
+  updateMeta = async (metadata, itemId, isFolder) => {
     try {
       // Apply changes on metadata depending on type of item
       const data = JSON.stringify({ metadata });
 
       if (isFolder) {
-        const updatedMetaFolder = await foldersSerivice.updateMetaData(data, itemId, this.state.isTeam);
+        const updatedMetaFolder = await foldersService.updateMetaData(data, itemId, this.state.isTeam);
 
         if (updatedMetaFolder) {
           window.analytics.track('file-rename', {
@@ -769,27 +509,6 @@ class XCloud extends React.Component {
     });
   };
 
-  trackFileDownloadStart = (file_id, file_name, file_size, file_type, folder_id) => {
-    const email = getUserData().email;
-    const data = { file_id, file_name, file_size, file_type, email, folder_id, platform: 'web' };
-
-    window.analytics.track('file-download-start', data);
-  }
-
-  trackFileDownloadError = (file_id, msg) => {
-    const email = getUserData().email;
-    const data = { file_id, email, msg, platform: 'web' };
-
-    window.analytics.track('file-download-error', data);
-  }
-
-  trackFileDownloadFinished = (file_id, file_size) => {
-    const email = getUserData().email;
-    const data = { file_id, file_size, email, platform: 'web' };
-
-    window.analytics.track('file-download-finished', data);
-  }
-
   downloadFile = async (id, _class, pcb) => {
     const fileId = pcb.props.rawItem.fileId;
     const fileName = pcb.props.rawItem.name;
@@ -800,7 +519,7 @@ class XCloud extends React.Component {
     const completeFilename = fileType ? `${fileName}.${fileType}` : `${fileName}`;
 
     try {
-      this.trackFileDownloadStart(fileId, fileName, fileSize, fileType, folderId);
+      tracksService.trackFileDownloadStart(fileId, fileName, fileSize, fileType, folderId);
 
       const { bridgeUser, bridgePass, encryptionKey, bucketId } = getEnvironmentConfig(this.state.isTeam);
       const network = new Network(bridgeUser, bridgePass, encryptionKey);
@@ -811,9 +530,9 @@ class XCloud extends React.Component {
 
       fileDownload(fileBlob, completeFilename);
 
-      this.trackFileDownloadFinished(id, fileSize);
+      tracksService.trackFileDownloadFinished(id, fileSize);
     } catch (err) {
-      this.trackFileDownloadError(fileId, err.message);
+      tracksService.trackFileDownloadError(fileId, err.message);
 
       toast.warn(`Error downloading file: \n Reason is ${err.message} \n File id: ${fileId}`);
     } finally {
@@ -826,44 +545,13 @@ class XCloud extends React.Component {
     $('input#uploadFileControl').trigger('click');
   };
 
-  trackFileUploadStart = (file, parentFolderId) => {
-    window.analytics.track('file-upload-start', {
-      file_size: file.size,
-      file_type: file.type,
-      folder_id: parentFolderId,
-      email: getUserData().email,
-      platform: 'web'
-    });
-  }
-
-  trackFileUploadFinished = (file) => {
-    console.log('file', file);
-    window.analytics.track('file-upload-finished', {
-      email: getUserData().email,
-      file_size: file.size,
-      file_type: file.type,
-      file_id: file.id
-    });
-  }
-
-  trackFileUploadError = (file, parentFolderId, msg) => {
-    window.analytics.track('file-upload-error', {
-      file_size: file.size,
-      file_type: file.type,
-      folder_id: parentFolderId,
-      email: getUserData().email,
-      msg,
-      platform: 'web'
-    });
-  }
-
   upload = async (file, parentFolderId, folderPath) => {
     if (!parentFolderId) {
       throw new Error('No folder ID provided');
     }
 
     try {
-      this.trackFileUploadStart(file, parentFolderId);
+      tracksService.trackFileUploadStart(file, parentFolderId);
 
       const { bridgeUser, bridgePass, encryptionKey, bucketId } = getEnvironmentConfig(this.state.isTeam);
       const network = new Network(bridgeUser, bridgePass, encryptionKey);
@@ -899,12 +587,12 @@ class XCloud extends React.Component {
         return res.json();
       });
 
-      this.trackFileUploadFinished({ size, type, id: data.id });
+      tracksService.trackFileUploadFinished({ size, type, id: data.id });
 
       return { res, data };
 
     } catch (err) {
-      this.trackFileUploadError(file, parentFolderId, err.message);
+      tracksService.trackFileUploadError(file, parentFolderId, err.message);
       toast.warn(`File upload error. Reason: ${err.message}`);
 
       throw err;
@@ -1059,48 +747,6 @@ class XCloud extends React.Component {
   };
 
   confirmDeleteItems = () => {
-    const selectedItems = this.getSelectedItems();
-
-    //const bucket = _.last(this.state.namePath).bucket;
-    const fetchOptions = {
-      method: 'DELETE',
-      headers: getHeaders(true, false, this.state.isTeam)
-    };
-
-    if (selectedItems.length === 0) {
-      return;
-    }
-    const deletionRequests = _.map(selectedItems, (v, i) => {
-      if (v.onDelete) {
-        return (next) => {
-          v.onDelete(); next();
-        };
-      }
-      const url = v.isFolder
-        ? `/api/storage/folder/${v.id}`
-        : `/api/storage/folder/${v.folderId}/file/${v.id}`;
-
-      return (next) =>
-        fetch(url, fetchOptions).then(() => {
-          window.analytics.track((v.isFolder ? 'folder' : 'file') + '-delete', {
-            email: getUserData().email,
-            platform: 'web'
-          });
-          next();
-        }).catch(next);
-    });
-
-    async.parallel(deletionRequests, (err, result) => {
-      if (err) {
-        throw err;
-      } else {
-        console.log('getFolderContent 16');
-        this.getContentFolder(this.state.currentFolderId, false, true, this.state.isTeam);
-      }
-    });
-  };
-
-  confirmDeleteItems1 = () => {
     const selectedItems = this.getSelectedItems();
 
     const deletionRequests = foldersService.deleteItems(this.state.isTeam, selectedItems);
