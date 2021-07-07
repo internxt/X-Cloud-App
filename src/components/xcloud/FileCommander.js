@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Dropdown } from 'react-bootstrap';
 import async from 'async';
 import $ from 'jquery';
+import _ from 'lodash';
 
 import './FileCommander.scss';
 import FileCommanderItem from './FileCommanderItem';
@@ -13,6 +14,7 @@ import 'react-toastify/dist/ReactToastify.css';
 
 import { compare } from 'natural-orderby';
 import LoadingFileExplorer from './LoadingFileExplorer';
+import SessionStorage from '../../lib/sessionStorage';
 
 const SORT_TYPES = {
   DATE_ADDED: 'Date_Added',
@@ -28,12 +30,13 @@ class FileCommander extends React.Component {
   constructor(props, state) {
     super(props, state);
     this.state = {
-      currentCommanderItems: this.props.currentCommanderItems,
+      currentCommanderItems: [...this.props.currentCommanderItems],
       namePath: this.props.namePath,
       selectedSortType: SORT_TYPES.DATE_ADDED,
       dragDropStyle: '',
       treeSize: 0,
-      isTeam: this.props.isTeam
+      isTeam: this.props.isTeam,
+      currentFolderId: this.props.currentFolderId
     };
   }
 
@@ -43,8 +46,13 @@ class FileCommander extends React.Component {
       this.props.namePath !== prevProps.namePath ||
       this.props.isTeam !== prevProps.isTeam
     ) {
+      const itemsUploadings = [];
+
+      itemsUploadings.push(JSON.parse(SessionStorage.get('uploadingItems'))
+        .filter(item => item.currentFolderId === this.props.currentFolderId && item.type === 'file' && !this.props.currentCommanderItems.find(({ name }) => item.name === name)));
+
       this.setState({
-        currentCommanderItems: this.props.currentCommanderItems,
+        currentCommanderItems: _.concat(...this.props.currentCommanderItems, ...itemsUploadings),
         namePath: this.props.namePath,
         isTeam: this.props.isTeam
       });
@@ -57,7 +65,7 @@ class FileCommander extends React.Component {
 
     switch (sortType) {
       case SORT_TYPES.DATE_ADDED:
-      // At this time, default order is date added
+        // At this time, default order is date added
         break;
       case SORT_TYPES.FILETYPE_ASC:
         sortFunc = function (a, b) {
@@ -198,9 +206,30 @@ class FileCommander extends React.Component {
     return parseInt(size) <= 1024 * 1024 * 1000 ? true : false;
   };
 
+  setUploadingItemsSessionStorage = (entry, entryName) => {
+    if (entry) {
+      const values = JSON.parse(SessionStorage.get('uploadingItems'));
+
+      if (values) {
+        const fileUploading = {
+          id: null,
+          type: entry.isFile ? 'file' : 'folder',
+          name: entryName,
+          isLoading: true,
+          currentFolderId: this.props.currentFolderId
+        };
+
+        values.push(fileUploading);
+        SessionStorage.set('uploadingItems', JSON.stringify(values));
+      }
+    }
+  }
+
   handleDrop = (e, parentId = null) => {
     e.preventDefault();
     let items = e.dataTransfer.items;
+
+    let nameEntry = '';
 
     async.map(
       items,
@@ -208,6 +237,10 @@ class FileCommander extends React.Component {
         let entry = item ? item.webkitGetAsEntry() : null;
 
         if (entry) {
+          nameEntry = (entry.isFile ? entry.name.split('.').slice(0, -1).join('.') : entry.name);
+
+          this.setUploadingItemsSessionStorage(entry, nameEntry);
+
           this.getTotalTreeSize(entry)
             .then(() => {
               if (this.isAcceptableSize(this.state.treeSize)) {
@@ -217,6 +250,16 @@ class FileCommander extends React.Component {
                   })
                   .catch((err) => {
                     nextItem(err);
+                  }).finally(() => {
+                    const itemsLists = JSON.parse(SessionStorage.get('uploadingItems'));
+
+                    const nameEntry = (entry.isFile ? entry.name.split('.').slice(0, -1).join('.') : entry.name);
+
+                    const filter = itemsLists.filter(item => item.name !== nameEntry);
+
+                    SessionStorage.del('uploadingItems');
+
+                    SessionStorage.set('uploadingItems', JSON.stringify(filter));
                   });
               } else {
                 toast.warn(
@@ -229,6 +272,7 @@ class FileCommander extends React.Component {
           nextItem();
         }
       },
+      //CALLBACK HANDLE DROP ASYNC FUNCTION
       (err) => {
         if (err) {
           let errmsg = err.error ? err.error : err;
@@ -243,10 +287,10 @@ class FileCommander extends React.Component {
 
         if (idTeam) {
           console.log('getFolderContent 1');
-          this.props.getFolderContent(this.props.currentFolderId, true, idTeam);
+          this.props.getFolderContent(this.props.currentFolderId, true, false, idTeam);
         } else {
           console.log('getFolderContent 2');
-          this.props.getFolderContent(this.props.currentFolderId);
+          this.props.getFolderContent(this.props.currentFolderId, true, false, false);
         }
       }
     );
@@ -341,7 +385,7 @@ class FileCommander extends React.Component {
   };
 
   render() {
-    const list = this.state.currentCommanderItems || 0;
+    const list = [...this.state.currentCommanderItems] || 0;
     const inRoot = this.state.namePath.length === 1;
 
     return (
@@ -436,6 +480,16 @@ class FileCommander extends React.Component {
         >
           {list.length > 0 ? (
             list.map((item, i) => {
+              const itemsUploadings = JSON.parse(SessionStorage.get('uploadingItems'));
+
+              let isDraggable = true;
+
+              itemsUploadings.forEach((itemUploading) => {
+                if (itemUploading.name === item.name) {
+                  isDraggable = false;
+                }
+              });
+
               return (
                 <FileCommanderItem
                   key={item.id + '-' + i}
@@ -460,7 +514,7 @@ class FileCommander extends React.Component {
                   selectHandler={this.props.selectItems}
                   isLoading={!!item.isLoading}
                   isDownloading={!!item.isDownloading}
-                  isDraggable={item.isDraggable === false ? false : true}
+                  isDraggable={isDraggable}
                   move={this.props.move}
                   updateMeta={this.props.updateMeta}
                   hasParentFolder={!inRoot}
@@ -468,6 +522,7 @@ class FileCommander extends React.Component {
                   isSelected={item.isSelected}
                   handleExternalDrop={this.handleDrop}
                   handleDragStart={this.handleDragStart}
+                  currentFolderId={this.props.currentFolderId}
                 />
               );
             })
