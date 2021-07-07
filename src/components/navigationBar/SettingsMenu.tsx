@@ -180,7 +180,6 @@ function SettingMenu({ isTeam }: SettingMenuProp): JSX.Element {
             });
             localStorageService.clear();
             localStorageService.del('workspace');
-            localStorageService.del('uploadingItems');
             history.push('/login');
           }}>Sign out</Dropdown.Item>
         </div>
