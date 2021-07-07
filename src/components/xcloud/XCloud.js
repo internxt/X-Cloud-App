@@ -675,6 +675,8 @@ class XCloud extends React.Component {
   }
 
   downloadFile = async (id, _class, pcb) => {
+    //STATUS: DECRYPTING DOWNLOAD FILE
+    console.log('DECRYPTING FILE');
     const fileId = pcb.props.rawItem.fileId;
     const fileName = pcb.props.rawItem.name;
     const fileSize = pcb.props.rawItem.size;
@@ -690,13 +692,22 @@ class XCloud extends React.Component {
       const network = new Network(bridgeUser, bridgePass, encryptionKey);
 
       const fileBlob = await network.downloadFile(bucketId, fileId, {
-        progressCallback: (progress) => pcb.setState({ progress })
+        //STATUS: DOWNLOAD PROGRESS FILE AND DOWNLOADING
+        progressCallback: ((progress) => {
+          console.log('PROGRESS DOWNLOADING', progress);
+          pcb.setState({ progress });
+        })
       });
+
+      //STATUS: FINISH DOWNLOAD FILE
+      console.log('FINISH DOWNLOADING');
 
       fileDownload(fileBlob, completeFilename);
 
       this.trackFileDownloadFinished(id, fileSize);
     } catch (err) {
+      //STATUS: ERROR DOWNLOAD FILE
+      console.log('ERROR DOWNLOADING');
       this.trackFileDownloadError(fileId, err.message);
 
       toast.warn(`Error downloading file: \n Reason is ${err.message} \n File id: ${fileId}`);
@@ -773,7 +784,10 @@ class XCloud extends React.Component {
         filepath: relativePath,
         filesize: file.size,
         filecontent: content,
-        progressCallback: () => { }
+        progressCallback: (progress) => {
+          //STATUS: UPLOAD FILE PROGRESS AS % AND UPLOADING
+          console.log('PROGRESS UPLOADING FILE', progress);
+        }
       });
 
       const name = encryptFilename(file.name, parentFolderId);
@@ -811,6 +825,9 @@ class XCloud extends React.Component {
   };
 
   handleUploadFiles = async (files, filesSessionStorageNotDropped = null, alreadyExists = false, parentFolderId = null, folderPath = null) => {
+    //STATUS: ENCRYPTING STATUS FILES
+    console.log('START ENCRYPTING FILE');
+
     files = Array.from(files);
 
     const filesToUpload = [];
@@ -878,6 +895,9 @@ class XCloud extends React.Component {
 
         this.upload(file, parentFolderId, relativePath)
           .then(({ res, data }) => {
+            //STATUS: FINISH UPLOADING FILE
+            console.log('FINISH UPLOADING');
+
             if (parentFolderId === currentFolderId) {
               const index = this.state.currentCommanderItems.findIndex((obj) => obj.name === file.name);
               const filesInFileExplorer = [...this.state.currentCommanderItems];
@@ -899,6 +919,8 @@ class XCloud extends React.Component {
               throw new Error('Rate limited');
             }
           }).catch((err) => {
+            //STATUS: ERROR UPLOAD FILE
+            console.log('ERROR UPLOADING');
             uploadErrors.push(err);
             console.log(err);
 
@@ -925,6 +947,8 @@ class XCloud extends React.Component {
         }
       });
     } catch (err) {
+      //STATUS: ERROR UPLOAD FILE
+      console.log('ERROR UPLOADING');
       if (err.message === 'There were some errors during upload') {
         // TODO: List errors in a queue?
         return uploadErrors.forEach(uploadError => {

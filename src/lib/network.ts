@@ -121,6 +121,8 @@ export class Network {
         progressCallback: params.progressCallback,
         finishedCallback: (err: Error | null, filecontent: Blob | null) => {
           if (err) {
+            //STATUS: ERROR DOWNLOAD FILE
+            console.log('ERROR DOWNLOADING');
             return reject(err);
           }
 
