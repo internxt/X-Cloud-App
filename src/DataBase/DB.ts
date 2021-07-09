@@ -78,9 +78,8 @@ class DB {
       if (this.db !== undefined) {
         const transaction = this.db.transaction(tableName, 'readwrite');
         const storeDB = transaction.objectStore(tableName);
-        const result = await storeDB.put(value);
 
-        return result;
+        await storeDB.put(value);
       } else {
         return new Error('DataBase undefined');
       }
@@ -98,9 +97,8 @@ class DB {
 
         for (const value of values) {
           await storeDB.put(value);
-
-          return this.getAllEntriesValues(tableName);
         }
+        return this.getAllEntriesValues(tableName);
       } else {
         return new Error('DataBase undefined');
       }
@@ -120,7 +118,6 @@ class DB {
           return result;
         }
         await storeDB.delete(id);
-        return id;
       } else {
         return new Error('DataBase undefined');
       }
