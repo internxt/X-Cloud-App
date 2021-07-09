@@ -50,7 +50,7 @@ class DB {
 
         return result;
       } else {
-        return new Error('DataBase undefined');
+        return new Error('Database undefined');
       }
     } catch (error) {
       throw new Error(`Error get value ${error} `);
@@ -66,7 +66,7 @@ class DB {
 
         return result;
       } else {
-        return new Error('DataBase undefined');
+        return new Error('Database undefined');
       }
     } catch (error) {
       throw new Error(`Error get all values ${error} `);
@@ -81,7 +81,7 @@ class DB {
 
         await storeDB.put(value);
       } else {
-        return new Error('DataBase undefined');
+        return new Error('Database undefined');
       }
     } catch (error) {
       throw new Error(`Error put value ${error} `);
@@ -100,7 +100,7 @@ class DB {
         }
         return this.getAllEntriesValues(tableName);
       } else {
-        return new Error('DataBase undefined');
+        return new Error('Database undefined');
       }
     } catch (error) {
       throw new Error(`Error put bulk values ${error} `);
@@ -119,7 +119,7 @@ class DB {
         }
         await storeDB.delete(id);
       } else {
-        return new Error('DataBase undefined');
+        return new Error('Database undefined');
       }
     } catch (error) {
       throw new Error(`Error put delete value ${error} `);
