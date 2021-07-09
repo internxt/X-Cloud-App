@@ -30,6 +30,9 @@ class DB {
         },
         blocking() {
           throw new Error('blocking');
+        },
+        terminated() {
+          throw new Error('terminated');
         }
       });
     } catch (error) {
