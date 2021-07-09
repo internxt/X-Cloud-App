@@ -9,7 +9,7 @@ class DB {
   }
 
   async init(): Promise<IDBPDatabase<unknown>> {
-    return this.connectDB(['test1', 'test2']).then((conexionDB) => {
+    return this.connectDB(['table1', 'table2']).then((conexionDB) => {
       return conexionDB;
     });
   }
@@ -130,7 +130,7 @@ class DB {
   }
 }
 
-const db = new DB('test');
+const db = new DB('drive-inxt');
 
 db.init();
 
