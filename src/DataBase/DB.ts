@@ -15,7 +15,6 @@ class DB {
   }
 
   async connectDB(tableNames: string[]): Promise<IDBPDatabase<unknown>> {
-    console.log('se conecta');
     try {
       this.db = await openDB(this.database, 57, {
         upgrade(db: IDBPDatabase) {
