@@ -16,7 +16,7 @@ class DB {
 
   async connectDB(tableNames: string[]): Promise<IDBPDatabase<unknown>> {
     try {
-      this.db = await openDB(this.database, 57, {
+      this.db = await openDB(this.database, 1, {
         upgrade(db: IDBPDatabase) {
           for (const tableName of tableNames) {
             if (db.objectStoreNames.contains(tableName)) {
