@@ -27,7 +27,7 @@ import history from '../../lib/history';
 
 import closeTab from '../../assets/Dashboard-Icons/close-tab.svg';
 import FileLogger from '../../services/fileLogger';
-
+import { addItemPath, removeItemPath } from '../../store/slices/navigationSlice';
 class XCloud extends React.Component {
 
   state = {
@@ -396,7 +396,8 @@ class XCloud extends React.Component {
     });
   };
 
-  openFolder = (e) => {
+  openFolder = (path, e) => {
+    this.props.store.dispatch(addItemPath(path));
     return new Promise((resolve) => {
       console.log('getFolderContent 11');
       this.getFolderContent(e, true, true, this.state.isTeam);
@@ -1061,6 +1062,7 @@ class XCloud extends React.Component {
   }
 
   folderTraverseUp() {
+    this.props.store.dispatch(removeItemPath());
     this.setState(this.popNamePath(), () => {
       this.getFolderContent(_.last(this.state.namePath).id, false, true, this.state.isTeam);
     });
@@ -1135,6 +1137,8 @@ class XCloud extends React.Component {
             getFolderContent={this.getFolderContent}
             isLoading={this.state.isLoading}
             isTeam={this.state.isTeam}
+            path = {this.props.store.path}
+            dispatch ={this.props.store.dispatch}
           />
 
           {this.getSelectedItems().length > 0 && this.state.popupShareOpened ? (

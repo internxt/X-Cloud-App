@@ -462,7 +462,7 @@ class FileCommander extends React.Component {
                   color={item.color ? item.color : 'blue'}
                   clickHandler={
                     item.isFolder
-                      ? this.props.openFolder.bind(null, item.id)
+                      ? this.props.openFolder.bind(null, totalPathItem, item.id)
                       : (item.onClick ? item.onClick : this.props.downloadFile.bind(null, totalPathItem, item.fileId))
 
                   }
