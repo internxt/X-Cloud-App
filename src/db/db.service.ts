@@ -1,11 +1,6 @@
 import db from '../database/DB';
 import { getTreeFolders } from '../services/storage.service';
 
-export function saveFileEntry(file) {
-  // save a file to DB
-  db.putEntryValue('levels', file);
-}
-
 export function saveItemList(folderId, fileList, folderList, path) {
   const folderEntryList = folderList.map((folder) => {
     console.log('FOLDER', folder);
@@ -31,24 +26,6 @@ export function saveItemList(folderId, fileList, folderList, path) {
 
   db.putEntryValue('levels', items);
 
-}
-
-export function saveFolderEntry(folder) {
-  // save folder to DB
-  db.putEntryValue('levels', folder);
-}
-
-export function saveFolderList(folderList) {
-  if (folderList.length > 0) {
-    folderList.map(folder => {
-      const fold = {
-        ...folder,
-        folderId: folder.id
-      };
-
-      saveFolderEntry(fold);
-    });
-  }
 }
 
 function resolvePath (path) {
