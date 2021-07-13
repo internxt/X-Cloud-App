@@ -20,7 +20,6 @@ import './XCloud.scss';
 
 import { getHeaders } from '../../lib/auth';
 
-import localStorageService from '../../services/localStorage.service';
 import { Network, getEnvironmentConfig } from '../../lib/network';
 import { storeTeamsInfo } from '../../services/teams.service';
 import history from '../../lib/history';
@@ -28,6 +27,9 @@ import history from '../../lib/history';
 import closeTab from '../../assets/Dashboard-Icons/close-tab.svg';
 import FileLogger from '../../services/fileLogger';
 import { addItemPath, removeItemPath } from '../../store/slices/navigationSlice';
+import db from '../../database/DB';
+import { getTreeContentFolders, getTreeFolders } from '../../services/storage.service';
+import { saveDirectoryLevel } from '../../db/db.service';
 class XCloud extends React.Component {
 
   state = {
@@ -86,6 +88,9 @@ class XCloud extends React.Component {
             this.getFolderContent(this.props.user.root_folder_id);
             this.setState({ currentFolderId: this.props.user.root_folder_id });
           }
+
+          saveDirectoryLevel(this.props.user.root_folder_id);
+
           const team = localStorageService.getTeams();
 
           if (team && !team.root_folder_id) {
@@ -258,17 +263,19 @@ class XCloud extends React.Component {
           throw body.error ? body.error : 'createFolder error';
         }
         window.analytics.track('folder-created', {
-          email: localStorage.getUser().email,
+          email: localStorageService.getUser().email,
           platform: 'web'
         });
         console.log('getFolderContent 10');
         this.getFolderContent(this.state.currentFolderId, false, true, this.state.isTeam);
       }).catch((err) => {
-        if (err.includes('already exists')) {
-          toast.warn('Folder with same name already exists');
-        } else {
-          toast.warn(`"${err}"`);
-        }
+        console.log('err', err);
+
+        // if (err.includes('already exists')) {
+        //   toast.warn('Folder with same name already exists');
+        // } else {
+        //   toast.warn(`"${err}"`);
+        // }
       });
     } else {
       toast.warn('Invalid folder name');
@@ -397,7 +404,6 @@ class XCloud extends React.Component {
   };
 
   openFolder = (path, e) => {
-    this.props.store.dispatch(addItemPath(path));
     return new Promise((resolve) => {
       console.log('getFolderContent 11');
       this.getFolderContent(e, true, true, this.state.isTeam);
@@ -425,7 +431,9 @@ class XCloud extends React.Component {
         return res.json();
       }
     }).then(async (data) => {
+      console.log('DATA', data);
       this.deselectAll();
+      //FIRST LEVEL
 
       // Set new items list
       let newCommanderFolders = _.map(data.children, (o) =>
@@ -1062,7 +1070,6 @@ class XCloud extends React.Component {
   }
 
   folderTraverseUp() {
-    this.props.store.dispatch(removeItemPath());
     this.setState(this.popNamePath(), () => {
       this.getFolderContent(_.last(this.state.namePath).id, false, true, this.state.isTeam);
     });
@@ -1137,8 +1144,6 @@ class XCloud extends React.Component {
             getFolderContent={this.getFolderContent}
             isLoading={this.state.isLoading}
             isTeam={this.state.isTeam}
-            path = {this.props.store.path}
-            dispatch ={this.props.store.dispatch}
           />
 
           {this.getSelectedItems().length > 0 && this.state.popupShareOpened ? (

@@ -9,7 +9,7 @@ class DB {
   }
 
   async init(): Promise<IDBPDatabase<unknown>> {
-    return this.connectDB(['paths', 'levels']).then((conexionDB) => {
+    return this.connectDB(['items', 'levels']).then((conexionDB) => {
       return conexionDB;
     });
   }
@@ -22,7 +22,10 @@ class DB {
             if (db.objectStoreNames.contains(tableName)) {
               continue;
             }
-            db.createObjectStore(tableName, { autoIncrement: false, keyPath: 'path' });
+            const key = tableName === 'items' ? 'fullPath' : 'folderId';
+
+            db.createObjectStore(tableName, { autoIncrement: false, keyPath: key });
+
           }
         },
         blocked() {
@@ -73,7 +76,8 @@ class DB {
     }
   }
 
-  async putEntryValue(tableName: string, value: object) {
+  async putEntryValue(tableName: string, value: any) {
+    console.log('value', value);
     try {
       if (this.db !== undefined) {
         const transaction = this.db.transaction(tableName, 'readwrite');
@@ -88,7 +92,7 @@ class DB {
     }
   }
 
-  async putBulkEntriesValues(tableName: string, values: object[]) {
+  async putBulkEntriesValues(tableName: string, values: any[]) {
     console.log(values);
     try {
       if (this.db !== undefined) {

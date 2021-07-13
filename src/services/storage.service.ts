@@ -23,3 +23,28 @@ export function getLimit(isTeam: boolean, maxCalls : number = 5) {
     console.log('Error getting /api/limit for App', err);
   });
 }
+
+export function getContentFolder(rootId) {
+  console.log('rootid', rootId);
+  return fetch(`/api/storage/folder/${rootId}`, {
+    method: 'get',
+    headers: getHeaders(true, true)
+  }).then((res) => {
+    if (res.status !== 200) {
+      throw res;
+    } else {
+      return res.json();
+    }
+  }).then(async (data) => {
+    return data;
+  })
+    .catch((err) => {
+      console.log('ERR get content foolder', err);
+    });
+}
+
+export function getTreeFolders(rootId) {
+  return getContentFolder(rootId).then((res) => {
+    return res;
+  });
+}
