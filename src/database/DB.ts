@@ -174,6 +174,41 @@ class DB {
       throw new Error('Error get file, the key is not defined');
     }
   }
+
+  async deleteFilesBulk(listFiles, tableName = 'items') {
+    try {
+      if (this.db !== undefined) {
+        const transaction = this.db.transaction(tableName, 'readwrite');
+        const storeDB = transaction.objectStore(tableName);
+
+        for (const file of listFiles) {
+          await storeDB.delete(file.fullPath);
+        }
+      } else {
+        return new Error('Database undefined');
+      }
+    } catch (error) {
+      throw new Error('Error delete list files');
+    }
+  }
+
+  async deleteFoldersBulk(listFolders, tableName = 'levels') {
+    try {
+      if (this.db !== undefined) {
+        const transaction = this.db.transaction(tableName, 'readwrite');
+        const storeDB = transaction.objectStore(tableName);
+
+        for (const folder of listFolders) {
+          await storeDB.delete(folder.id);
+        }
+      } else {
+        return new Error('Database undefined');
+      }
+    } catch (error) {
+      throw new Error('Error delete folders list');
+    }
+  }
+
 }
 
 const db = new DB('drive-inxt');

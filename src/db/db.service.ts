@@ -46,7 +46,6 @@ export async function saveDirectoryLevel(folderId = null, child = null) {
   let path = child === null ? '' : child.path ;
 
   // size = files.reduce((acc, file) => acc + file.size);
-
   //saveFolderList(children);
   saveItemList(folderId, files, children, path/*, size*/);
   if (children.length > 0) {
@@ -80,4 +79,13 @@ function saveItem (item) {
 
 function saveLevel (item) {
   db.putEntryValue('levels', item);
+}
+
+function removeItems (filesList, folderList) {
+  if (filesList) {
+    db.deleteFilesBulk(filesList);
+  }
+  if (folderList) {
+    db.deleteFoldersBulk(folderList);
+  }
 }
