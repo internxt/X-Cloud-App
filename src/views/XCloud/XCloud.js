@@ -89,7 +89,11 @@ class XCloud extends React.Component {
             this.setState({ currentFolderId: this.props.user.root_folder_id });
           }
 
-          saveDirectoryLevel(this.props.user.root_folder_id);
+          saveDirectoryLevel(this.props.user.root_folder_id).then(() => {
+            //TODO: HERE PUT GET VALUES ROOT FOLDER
+            db.getFolderItemForId(this.props.user.root_folder_id).then((res) => {
+            });
+          });
 
           const team = localStorageService.getTeams();
 

@@ -50,22 +50,6 @@ class DB {
     return this.db;
   }
 
-  async getEntryValueForId(tableName: string, id: number) {
-    try {
-      if (this.db !== undefined) {
-        const transaction = this.db.transaction(tableName, 'readonly');
-        const storeDB = transaction.objectStore(tableName);
-        const result = await storeDB.get(id);
-
-        return result;
-      } else {
-        return new Error('Database undefined');
-      }
-    } catch (error) {
-      throw new Error(`Error get value ${error} `);
-    }
-  }
-
   async getAllEntriesValues(tableName: string) {
     try {
       if (this.db !== undefined) {
@@ -132,6 +116,62 @@ class DB {
       }
     } catch (error) {
       throw new Error(`Error put delete value ${error} `);
+    }
+  }
+
+  async getFolderItemForId(folderId: number) {
+    try {
+      if (this.db !== undefined) {
+        const transactionLevels = this.db.transaction('levels', 'readonly');
+        const storeLevelsDB = transactionLevels.objectStore('levels');
+        const resultLevels = await storeLevelsDB.get(folderId);
+
+        return resultLevels;
+      } else {
+        return new Error('Database undefined');
+      }
+    } catch (error) {
+      throw new Error('Error get folder, the key is not defined');
+    }
+
+  }
+
+  async getFolderItemForPath(folderPath: string) {
+    try {
+      if (this.db !== undefined) {
+        const transactionItems = this.db.transaction('items', 'readonly');
+        const storeItemsDB = transactionItems.objectStore('items');
+        const resultItems = await storeItemsDB.get(folderPath);
+        const folderId = resultItems.folder.id;
+
+        const transactionLevels = this.db.transaction('levels', 'readonly');
+        const storeLevelsDB = transactionLevels.objectStore('levels');
+        const resultLevels = await storeLevelsDB.get(folderId);
+
+        return resultLevels;
+      } else {
+        return new Error('Database undefined');
+      }
+    } catch (error) {
+      throw new Error('Error get folder, the key is not defined');
+    }
+  }
+
+  async getFileItem(filePath) {
+    try {
+      if (this.db !== undefined) {
+        const transactionItems = this.db.transaction('items', 'readonly');
+        const storeItemsDB = transactionItems.objectStore('items');
+        const resultItems = await storeItemsDB.get(filePath);
+        const file = resultItems.file;
+
+        return file;
+
+      } else {
+        return new Error('Database undefined');
+      }
+    } catch (error) {
+      throw new Error('Error get file, the key is not defined');
     }
   }
 }
