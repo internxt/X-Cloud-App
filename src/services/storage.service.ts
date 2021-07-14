@@ -25,7 +25,6 @@ export function getLimit(isTeam: boolean, maxCalls : number = 5) {
 }
 
 export function getContentFolder(rootId) {
-  console.log('rootid', rootId);
   return fetch(`/api/storage/folder/${rootId}`, {
     method: 'get',
     headers: getHeaders(true, true)
