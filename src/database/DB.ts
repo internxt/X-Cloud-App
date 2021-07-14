@@ -1,4 +1,6 @@
 import { IDBPDatabase, openDB } from 'idb';
+import history from '../lib/history';
+import localStorageService from '../services/localStorage.service';
 
 class DB {
   private database: string;
@@ -35,7 +37,11 @@ class DB {
           throw new Error('blocking');
         },
         terminated() {
-          throw new Error('terminated');
+          // Clear storage
+          localStorageService.clear();
+          // Redirect to login
+          history.push('/login');
+          // throw new Error('terminated');
         }
       });
     } catch (error) {
@@ -77,7 +83,6 @@ class DB {
   }
 
   async putEntryValue(tableName: string, value: any) {
-    console.log('value', value);
     try {
       if (this.db !== undefined) {
         const transaction = this.db.transaction(tableName, 'readwrite');
