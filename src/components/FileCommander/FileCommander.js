@@ -13,6 +13,7 @@ import LoadingFileExplorer from '../LoadingFileExplorer/LoadingFileExplorer';
 
 import DropdownArrowIcon from '../../assets/Dashboard-Icons/Dropdown arrow.svg';
 import BackToIcon from '../../assets/Dashboard-Icons/back-arrow.svg';
+import { uploadService } from '../../services/upload.service';
 
 const SORT_TYPES = {
   DATE_ADDED: 'Date_Added',
@@ -305,7 +306,17 @@ class FileCommander extends React.Component {
       if (item.isFile) {
         // Get file
         item.file((file) => {
-          this.props.uploadDroppedFile([file], uuid, path).then(resolve).catch(reject);
+          const fileToUpload = {
+            files: [file],
+            parentFolderId: uuid,
+            currentFolderId: this.props.currentFolderId,
+            namePath: this.props.namePath,
+            currentCommanderItems: this.props.currentCommanderItems,
+            isTeam: this.props.isTeam,
+            folderPath: path
+          };
+
+          uploadService(fileToUpload);
         });
       } else if (item.isDirectory) {
         this.props

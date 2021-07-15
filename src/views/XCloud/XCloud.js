@@ -20,13 +20,13 @@ import './XCloud.scss';
 
 import { getHeaders } from '../../lib/auth';
 
-import localStorageService from '../../services/localStorage.service';
 import { Network, getEnvironmentConfig } from '../../lib/network';
 import { storeTeamsInfo } from '../../services/teams.service';
 import history from '../../lib/history';
 
 import closeTab from '../../assets/Dashboard-Icons/close-tab.svg';
 import FileLogger from '../../services/fileLogger';
+import { uploadService } from '../../services/upload.service';
 
 class XCloud extends React.Component {
 
@@ -958,13 +958,18 @@ class XCloud extends React.Component {
   }
 
   uploadFile = (e) => {
-    this.handleUploadFiles(e.target.files).then(() => {
+    const file = {
+      files: e.target.files,
+      parentFolderId: this.state.parentFolderId,
+      currentFolderId: this.state.currentFolderId,
+      namePath: this.state.namePath,
+      currentCommanderItems: this.state.currentCommanderItems,
+      isTeam: this.state.isTeam
+    };
+
+    uploadService(file).then(() => {
       this.getFolderContent(this.state.currentFolderId, false, false, this.state.isTeam);
     });
-  }
-
-  uploadDroppedFile = (e, uuid, folderPath) => {
-    return this.handleUploadFiles(e, uuid, folderPath);
   }
 
   shareItem = () => {
