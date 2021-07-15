@@ -205,7 +205,6 @@ export async function uploadService (files: IFileToUploadService) {
 }
 
 export async function upload (file: IFileUpload) {
-  console.log('FILE', file.file);
 
   if (!file.parentFolderId) {
     throw new Error('No folder ID provided');
