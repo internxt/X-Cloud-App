@@ -37,11 +37,7 @@ class DB {
           throw new Error('blocking');
         },
         terminated() {
-          // Clear storage
-          localStorageService.clear();
-          // Redirect to login
-          history.push('/login');
-          // throw new Error('terminated');
+          window.location.reload();
         }
       });
     } catch (error) {
