@@ -43,7 +43,7 @@ export async function saveDirectoryLevel(folderId = null, child = null) {
 
   folderId = dataFolder.id;
 
-  let path = child === null ? '' : child.path ;
+  let path = child === null ? '' : child.fullPath ;
 
   // size = files.reduce((acc, file) => acc + file.size);
   //saveFolderList(children);
