@@ -5,6 +5,8 @@ import { getEnvironmentConfig, Network } from '../lib/network';
 import localStorageService from './localStorage.service';
 import history from '../lib/history';
 import { getHeaders } from '../lib/auth';
+import analyticsService, { trackFileUploadFinished } from './analytics.service';
+import { DevicePlatform } from '../models/enums';
 
 interface IFileToUploadService {
   files: any[] //this object will change
@@ -212,10 +214,14 @@ export async function upload (file: IFileUpload) {
 
   try {
 
+    const email = localStorageService.getUser().email;
+
+    analyticsService.trackFileUploadStart({ file_size: file.size, file_type: file.type, folder_id: file.parentFolderId, email, platform: DevicePlatform.web });
+
     const { bridgeUser, bridgePass, encryptionKey, bucketId } = getEnvironmentConfig(file.isTeam);
 
     if (!bucketId) {
-
+      analyticsService.trackFileUploadBucketIdUndefined({ email, platform: DevicePlatform.web });
       toast.warn('Login again to start uploading files');
       localStorageService.clear();
       history.push('/login');
@@ -258,9 +264,12 @@ export async function upload (file: IFileUpload) {
       return res.json();
     });
 
+    analyticsService.trackFileUploadFinished({ file_size: file.size, file_id: data.id, file_type: file.type, email });
+
     return { res, data };
 
   } catch (err) {
+    analyticsService.trackFileUploadError({ file_size: file.size, file_type: file.type, folder_id: file.parentFolderId, email, msg: err.message, platform: DevicePlatform.web });
     toast.warn(`File upload error. Reason: ${err.message}`);
 
     throw err;
